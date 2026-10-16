@@ -1,0 +1,1 @@
+import {Suspense} from "react";import {GeneratorPage} from "@/components/generator";import {Spinner} from "@/components/ui";export default function Page(){return <Suspense fallback={<Spinner/>}><GeneratorPage surface="image"/></Suspense>;}

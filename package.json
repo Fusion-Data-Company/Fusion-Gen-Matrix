@@ -1,0 +1,58 @@
+{
+  "name": "fusion-gen-matrix",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack --hostname 127.0.0.1 --port 3210",
+    "build": "next build --webpack && node scripts/check-client-secrets.mjs",
+    "start": "next start --hostname 127.0.0.1 --port 3210",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:e2e": "node scripts/browser-workflow.mjs",
+    "db:init": "node --conditions=react-server --import tsx scripts/db-init.ts",
+    "security:scan": "node scripts/check-client-secrets.mjs",
+    "test:smoke": "node scripts/browser-smoke.mjs"
+  },
+  "dependencies": {
+    "next": "^16.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "next-auth": "5.0.0-beta.32",
+    "@auth/mongodb-adapter": "latest",
+    "mongodb": "^6.20.0",
+    "resend": "latest",
+    "@react-email/components": "latest",
+    "@react-email/render": "latest",
+    "stripe": "latest",
+    "@aws-sdk/client-s3": "latest",
+    "@aws-sdk/lib-storage": "latest",
+    "@base-ui/react": "latest",
+    "@tanstack/react-virtual": "latest",
+    "lucide-react": "latest",
+    "zustand": "latest",
+    "zod": "^4.0.0",
+    "server-only": "latest",
+    "tailwindcss": "^4.0.0",
+    "@tailwindcss/postcss": "^4.0.0",
+    "clsx": "latest",
+    "tailwind-merge": "latest",
+    "ajv": "^8.0.0",
+    "ajv-formats": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^16.4.2",
+    "vitest": "latest",
+    "tsx": "latest",
+    "@playwright/test": "latest"
+  },
+  "packageManager": "pnpm@10.34.7",
+  "engines": {
+    "node": "22.x"
+  }
+}

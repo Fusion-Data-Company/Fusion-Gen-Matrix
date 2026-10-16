@@ -1,0 +1,813 @@
+{
+  "higgsfield/ads-studio/v1.0": [
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    }
+  ],
+  "higgsfield/cinema-studio/4.0": [
+    {
+      "key": "audio_urls",
+      "role": "audio",
+      "kind": "audio",
+      "array": true
+    },
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    },
+    {
+      "key": "video_urls",
+      "role": "video",
+      "kind": "video",
+      "array": true
+    }
+  ],
+  "higgsfield/genjutsu/motion-transfer/v1.0": [
+    {
+      "key": "video_url",
+      "role": "source",
+      "kind": "video",
+      "array": false
+    },
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    }
+  ],
+  "higgsfield/genjutsu/object-swap/v1.0": [
+    {
+      "key": "video_url",
+      "role": "source",
+      "kind": "video",
+      "array": false
+    },
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    }
+  ],
+  "higgsfield/genjutsu/restyle/v1.0": [
+    {
+      "key": "video_url",
+      "role": "source",
+      "kind": "video",
+      "array": false
+    },
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    }
+  ],
+  "xai/grok-imagine-image-2.0": [
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    }
+  ],
+  "xai/grok-imagine-video/v1.5/reference-to-video": [
+    {
+      "key": "audio_url",
+      "role": "audio",
+      "kind": "audio",
+      "array": false
+    },
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    }
+  ],
+  "minimax/hailuo-2.3/standard/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "minimax/hailuo-2.3/standard/text-to-video": [],
+  "alibaba/happy-horse/v1.1/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "alibaba/happy-horse/v1.1/reference-to-video": [
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    }
+  ],
+  "alibaba/happy-horse/v1.1/text-to-video": [],
+  "alibaba/happy-horse/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "alibaba/happy-horse/reference-to-video": [
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    }
+  ],
+  "alibaba/happy-horse/text-to-video": [],
+  "ideogram/v4.0": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "kling-video/v2.5-turbo/pro/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "kling-video/v2.5-turbo/pro/text-to-video": [],
+  "kling-video/v2.5-turbo/standard/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "kling-video/motion-control/pro": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "video_url",
+      "role": "source",
+      "kind": "video",
+      "array": false
+    }
+  ],
+  "kling-video/motion-control/std": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "video_url",
+      "role": "source",
+      "kind": "video",
+      "array": false
+    }
+  ],
+  "kling-video/v2.6/pro/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "kling-video/v2.6/pro/text-to-video": [],
+  "kling-video/v3/motion-control/pro": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "video_url",
+      "role": "source",
+      "kind": "video",
+      "array": false
+    }
+  ],
+  "kling-video/v3/motion-control/std": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "video_url",
+      "role": "source",
+      "kind": "video",
+      "array": false
+    }
+  ],
+  "kling-video/v3.0/4k/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "last_image_url",
+      "role": "end",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "kling-video/v3.0/4k/text-to-video": [],
+  "kling-video/v3.0/pro/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "last_image_url",
+      "role": "end",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "kling-video/v3.0/pro/text-to-video": [],
+  "kling-video/v3.0/std/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "last_image_url",
+      "role": "end",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "kling-video/v3.0/std/text-to-video": [],
+  "kling-video/v3.0-turbo/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "kling-video/v3.0-turbo/text-to-video": [],
+  "kling-video/o3/first-last-frame": [
+    {
+      "key": "last_frame_url",
+      "role": "end",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "first_frame_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "kling-video/o3/image-reference": [
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    },
+    {
+      "key": "last_frame_url",
+      "role": "end",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "first_frame_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "kling-video/o3/video-edit": [
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    },
+    {
+      "key": "video_urls",
+      "role": "video",
+      "kind": "video",
+      "array": true
+    }
+  ],
+  "kling-video/o3/video-reference": [
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    },
+    {
+      "key": "video_urls",
+      "role": "video",
+      "kind": "video",
+      "array": true
+    }
+  ],
+  "kling-video/omni/first-last-frame": [
+    {
+      "key": "last_frame_url",
+      "role": "end",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "first_frame_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "kling-video/omni/image-reference": [
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    }
+  ],
+  "kling-video/omni/video-edit": [
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    },
+    {
+      "key": "video_urls",
+      "role": "video",
+      "kind": "video",
+      "array": true
+    }
+  ],
+  "kling-video/omni/video-reference": [
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    },
+    {
+      "key": "video_urls",
+      "role": "video",
+      "kind": "video",
+      "array": true
+    }
+  ],
+  "lightricks/ltx-2.5/image-to-video/fast": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "end_image_url",
+      "role": "end",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "lightricks/ltx-2.5/image-to-video/pro": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "end_image_url",
+      "role": "end",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "lightricks/ltx-2.5/text-to-video/fast": [],
+  "lightricks/ltx-2.5/text-to-video/pro": [],
+  "marketing-studio/image/flare": [
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    }
+  ],
+  "marketing-studio/image": [
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    }
+  ],
+  "marketing-studio/image/sunburst": [
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    }
+  ],
+  "minimax/h3/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "end_image_url",
+      "role": "end",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "minimax/h3/reference-to-video": [
+    {
+      "key": "audio_urls",
+      "role": "audio",
+      "kind": "audio",
+      "array": true
+    },
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    },
+    {
+      "key": "video_urls",
+      "role": "video",
+      "kind": "video",
+      "array": true
+    }
+  ],
+  "minimax/h3/text-to-video": [],
+  "pixverse/v6/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "end_image_url",
+      "role": "end",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "pixverse/v6/text-to-video": [],
+  "alibaba/qwen-image-3/edit": [
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    }
+  ],
+  "alibaba/qwen-image-3/text-to-image": [],
+  "recraft/v4.1/pro/text-to-image": [],
+  "recraft/v4.1/utility/pro/text-to-image": [],
+  "recraft/v4.1/utility/text-to-image": [],
+  "recraft/v4.1/text-to-image": [],
+  "bytedance/seedance-2.5/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "end_image_url",
+      "role": "end",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "bytedance/seedance-2.5/reference-to-video": [
+    {
+      "key": "audio_urls",
+      "role": "audio",
+      "kind": "audio",
+      "array": true
+    },
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    },
+    {
+      "key": "video_urls",
+      "role": "video",
+      "kind": "video",
+      "array": true
+    }
+  ],
+  "bytedance/seedance-2.5/text-to-video": [],
+  "bytedance/seedance-2.5/video-edit": [
+    {
+      "key": "video_url",
+      "role": "source",
+      "kind": "video",
+      "array": false
+    },
+    {
+      "key": "audio_urls",
+      "role": "audio",
+      "kind": "audio",
+      "array": true
+    },
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    },
+    {
+      "key": "video_urls",
+      "role": "video",
+      "kind": "video",
+      "array": true
+    }
+  ],
+  "bytedance/seedance-2.5/video-extend": [
+    {
+      "key": "video_url",
+      "role": "source",
+      "kind": "video",
+      "array": false
+    },
+    {
+      "key": "audio_urls",
+      "role": "audio",
+      "kind": "audio",
+      "array": true
+    },
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    },
+    {
+      "key": "video_urls",
+      "role": "video",
+      "kind": "video",
+      "array": true
+    }
+  ],
+  "bytedance/seedance-2.0/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "end_image_url",
+      "role": "end",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "bytedance/seedance-2.0/reference-to-video": [
+    {
+      "key": "audio_urls",
+      "role": "audio",
+      "kind": "audio",
+      "array": true
+    },
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    },
+    {
+      "key": "video_urls",
+      "role": "video",
+      "kind": "video",
+      "array": true
+    }
+  ],
+  "bytedance/seedance-2.0/text-to-video": [],
+  "higgsfield-ai/soul/v2/standard": [],
+  "higgsfield-ai/soul/cinema": [],
+  "higgsfield-ai/soul/standard": [
+    {
+      "key": "image_reference_url",
+      "role": "reference",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "wan/v2.6/image-to-video": [
+    {
+      "key": "audio_url",
+      "role": "audio",
+      "kind": "audio",
+      "array": false
+    },
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "wan/v2.6/reference-to-video": [
+    {
+      "key": "video_urls",
+      "role": "video",
+      "kind": "video",
+      "array": true
+    }
+  ],
+  "wan/v2.6/text-to-video": [
+    {
+      "key": "audio_url",
+      "role": "audio",
+      "kind": "audio",
+      "array": false
+    }
+  ],
+  "wan/v2.7/image-to-video": [
+    {
+      "key": "audio_url",
+      "role": "audio",
+      "kind": "audio",
+      "array": false
+    },
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "end_image_url",
+      "role": "end",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "wan/v2.7/reference-to-video": [
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    },
+    {
+      "key": "video_urls",
+      "role": "video",
+      "kind": "video",
+      "array": true
+    }
+  ],
+  "wan/v2.7/text-to-video": [
+    {
+      "key": "audio_url",
+      "role": "audio",
+      "kind": "audio",
+      "array": false
+    }
+  ],
+  "alibaba/wan-3.0-prime/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "end_image_url",
+      "role": "end",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "alibaba/wan-3.0-prime/reference-to-video": [
+    {
+      "key": "audio_urls",
+      "role": "audio",
+      "kind": "audio",
+      "array": true
+    },
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    },
+    {
+      "key": "video_urls",
+      "role": "video",
+      "kind": "video",
+      "array": true
+    }
+  ],
+  "alibaba/wan-3.0-prime/text-to-video": [],
+  "alibaba/wan-3.0/image-to-video": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "end_image_url",
+      "role": "end",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "alibaba/wan-3.0/reference-to-video": [
+    {
+      "key": "audio_urls",
+      "role": "audio",
+      "kind": "audio",
+      "array": true
+    },
+    {
+      "key": "image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    },
+    {
+      "key": "video_urls",
+      "role": "video",
+      "kind": "video",
+      "array": true
+    }
+  ],
+  "alibaba/wan-3.0/text-to-video": [],
+  "z-image/turbo": [],
+  "higgsfield-ai/soul/v2/image-to-image": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    }
+  ],
+  "higgsfield/ai-influencer": [
+    {
+      "key": "image_url",
+      "role": "start",
+      "kind": "image",
+      "array": false
+    },
+    {
+      "key": "item_image_urls",
+      "role": "reference",
+      "kind": "image",
+      "array": true
+    }
+  ]
+}

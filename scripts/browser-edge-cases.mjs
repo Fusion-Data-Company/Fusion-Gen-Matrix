@@ -1,0 +1,54 @@
+import {chromium,expect} from "@playwright/test";
+import fs from "node:fs/promises";
+await fs.mkdir("docs/evidence",{recursive:true});
+const base=process.env.BASE_URL||"http://127.0.0.1:3210";
+if(!["127.0.0.1","localhost","[::1]"].includes(new URL(base).hostname))throw new Error("This fixture test requires a loopback demo.");
+const browser=await chromium.launch({channel:"chrome",headless:true});
+const context=await browser.newContext({viewport:{width:1440,height:1000}});
+await context.addInitScript(()=>localStorage.setItem("fusion-consent","essential"));
+const page=await context.newPage(),evidence={startedAt:new Date().toISOString(),checks:[]},errors=[];
+page.on("pageerror",error=>errors.push(error.message));
+const record=check=>{evidence.checks.push(check);console.log("PASS",check);};
+const balance=async()=>{const r=await context.request.get(base+"/api/account");const d=await r.json();return d.user.subscriptionCredits+d.user.topupCredits;};
+try{
+ const state=await (await context.request.get(base+"/api/studio")).json();expect(state.mode).toBe("demo");
+ const login=await context.request.post(base+"/api/demo/login",{headers:{Origin:base},data:{email:"operator@preview.local"}});expect(login.ok()).toBeTruthy();
+ await page.goto(base+"/image",{waitUntil:"networkidle"});
+ const prompt="Retry verification "+Date.now();await page.getByRole("textbox",{name:/^Prompt/}).fill(prompt);
+ let firstInput,firstGeneration,resolveFirst;
+ const firstReceipt=new Promise(resolve=>{resolveFirst=resolve;});
+ const intercept=async route=>{firstInput=route.request().postDataJSON();const response=await route.fetch();expect(response.ok()).toBeTruthy();firstGeneration=(await response.json()).generation;await route.abort("failed");resolveFirst();};
+ await page.route(base+"/api/generations",intercept);
+ const before=await balance();await page.getByRole("button",{name:/Generate preview/}).click();await firstReceipt;
+ await expect(page.getByRole("button",{name:/Generate preview/})).toBeEnabled();
+ const afterFirst=await balance();expect(before-afterFirst).toBe(firstGeneration.cost);
+ await page.unroute(base+"/api/generations",intercept);
+ const retriedRequest=page.waitForRequest(request=>request.url()===base+"/api/generations"&&request.method()==="POST");
+ const retriedResponse=page.waitForResponse(response=>response.url()===base+"/api/generations"&&response.request().method()==="POST");
+ await page.getByRole("button",{name:/Generate preview/}).click();
+ const request=await retriedRequest,response=await retriedResponse;expect(response.ok()).toBeTruthy();
+ expect(request.postDataJSON().idempotencyKey).toBe(firstInput.idempotencyKey);
+ expect((await response.json()).generation.id).toBe(firstGeneration.id);expect(await balance()).toBe(afterFirst);
+ record("Lost receipt retries the same generation intent without a second debit.");
+ let complete;
+ for(let i=0;i<30;i++){const status=await (await context.request.get(base+"/api/generations/status?ids="+firstGeneration.id)).json();complete=status.items[0];if(complete.status==="completed")break;await new Promise(resolve=>setTimeout(resolve,300));}
+ expect(complete.status).toBe("completed");
+ const current=page.getByRole("button",{name:"Open generation "+prompt,exact:true});
+ await expect(current.getByRole("img",{name:prompt,exact:true})).toBeVisible({timeout:10000});
+ record("Completed sample replaces its queued tile through normal UI polling.");
+ const fixtures=Array.from({length:500},(_,index)=>({...complete,id:"gallery-fixture-"+index,prompt:"Gallery fixture "+index}));
+ await page.route("**/api/generations?surface=image",route=>route.fulfill({json:{items:fixtures,nextCursor:null}}));
+ await page.reload({waitUntil:"networkidle"});
+ const gallery=page.locator(".virtual-gallery");await expect(gallery).toBeVisible();
+ const first=page.getByRole("button",{name:"Open generation Gallery fixture 0",exact:true});
+ await expect(first).toBeVisible();
+ await gallery.evaluate(element=>{element.scrollTop=element.scrollHeight;});
+ await expect(page.getByRole("button",{name:"Open generation Gallery fixture 499",exact:true})).toBeVisible();
+ await gallery.evaluate(element=>{element.scrollTop=0;});await expect(first).toBeVisible();
+ expect(await page.getByRole("button",{name:/Open generation Gallery fixture/}).count()).toBeLessThan(500);
+ await page.screenshot({path:"docs/evidence/gallery-500-desktop.png",fullPage:true});
+ record("A 500-item fixture gallery virtualizes, reaches the final item, and returns to loaded rows.");
+ expect(errors).toEqual([]);record("Retry and gallery checks produce no browser JavaScript exceptions.");
+ evidence.status="passed";
+}catch(error){evidence.status="failed";evidence.error=String(error);await page.screenshot({path:"docs/evidence/edge-workflow-failure.png",fullPage:true});throw error;}
+finally{evidence.errors=errors;await fs.writeFile("docs/evidence/browser-edge-cases.json",JSON.stringify(evidence,null,2));await browser.close();}

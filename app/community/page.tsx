@@ -1,0 +1,1 @@
+import {CommunityPage} from "@/components/discovery-pages";export default function Page(){return <CommunityPage/>;}

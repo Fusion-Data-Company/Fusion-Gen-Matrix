@@ -1,0 +1,73 @@
+# Fusion Gen Matrix completion checklist
+
+Audit date: 2026-10-15 (PDT). Baseline: the full 663-line [creator prompt](https://docs.google.com/document/d/1EHo5qNubl2eso078n1XwmvPHNETfsc84HMN9j9sw7Sg/edit?usp=sharing). Its SHA-256 is `6201b66564cc40e20f28baaba7726c226baf638733be97eab1e50f4c52133487`.
+
+The original studio interface, server adapters and local demonstration workflows are implemented. The creator prompt's complete production definition of done is **not yet met**: real provider execution, account integrations, paid billing acceptance and visual parity remain unverified. The intended first public release is a **read-only showcase**. GitHub publication or a Vercel READY status does not establish live generation support.
+
+Statuses: **Implemented** means present in source; **Tested** names the verified environment; **Configuration required** means implementation exists but external setup/acceptance is outstanding; **Missing** means the requested behavior or proof is absent. A row may have more than one status.
+
+## Evidence checkpoint
+
+| Evidence | Result and scope |
+| --- | --- |
+| Catalog and provider suite | 101 mocked tests in the catalog snapshot; all 85 documented generation examples map to verified paths. [Snapshot](../lib/catalog/verification.json), [catalog](model-catalog.md) |
+| Combined automated suite | Release coordinator confirmed the final combined suite: **185 tests passed**, including the 7 callback regression tests. |
+| Final callback change | 7 additional focused tests passed; targeted ESLint passed; whole-project `tsc --noEmit --incremental false` passed after the change. [Tests](../tests/higgsfield-webhook.test.ts) |
+| Local browser workflow | The retained local workflow report records 14 passed checks. The edge-case report adds 4 passed checks for lost-response retry without a second debit, normal UI polling, a 500-item fixture gallery and no JavaScript exceptions. Both ran against the production-build local demo. |
+| Captured UI | Desktop/mobile image, video, admin, 500-item gallery and showcase screenshots are retained locally. See [verification](verification.md) for the sanitized public record. |
+| Final local release checks | Release coordinator confirmed final Next.js build, TypeScript and full ESLint passes after the callback fix. The build's client secret scan passed across 72 files. |
+| Public deployment verification | Publication and public URL inspection remain pending at this source-freeze checkpoint. Local evidence does not contain a public deployment URL or release commit. |
+| Live account requests | No paid generation, real magic-link delivery, Stripe purchase, R2 round trip or standalone app account access established by this audit. |
+| Visual/performance acceptance | No source-versus-Fusion screenshot set, Lighthouse score or comprehensive assistive-technology audit. The 500-item fixture scroll check passed; no timed performance benchmark is asserted. |
+
+The earlier catalog snapshot contains a historical whole-project typecheck blocker. That blocker was resolved; it is not the current typecheck result. Build now includes the client secret scan. `test:e2e` and `test:smoke` invoke the actual standalone browser runners.
+
+## Feature-by-feature audit
+
+| Creator requirement | Status | Implementation and remaining boundary |
+| --- | --- | --- |
+| Next.js 16, React 19, strict TypeScript, Tailwind 4, Base UI, Lucide, Zustand, TanStack Virtual | Implemented; Tested locally | Dependencies and lockfile present. Original components replace the requested app-template scaffold; template Quanta styles were not imported. |
+| Fusion branding and original copy | Implemented | Fusion Gen Matrix wordmark, dark interface and lime accent. Original SVG illustrations and explicit demo fixtures replace provider marketing assets. |
+| Public reference research and source inventory | Implemented; Missing parity proof | API documentation and schemas retained; [UI inventory](ui-inventory.md) states source-site access limits. Requested `docs/screens/` source screenshots and `docs/decisions.md` are absent; decisions are recorded here and in [provenance](source-provenance.md). |
+| Environment validation, server-only clients and clear unavailable states | Implemented; Tested locally | Demo is loopback-only; showcase is read-only; live mode fails closed without required configuration. No browser BYOK or credential fields. |
+| MongoDB collections, transactions, indexes and database sessions | Implemented; Configuration required | Typed repository, official MongoDB driver/adapter and `db:init`. Local file-backed transaction tests do not prove Atlas connectivity, indexes or replica-set transactions. |
+| Magic-link-only auth, branded email, expiry, rate limits, admin role | Implemented; Tested locally; Configuration required | Auth.js/Resend integration, 10-minute link expiry, server role checks, email/network limits. Local operator sign-in and ownership tested; actual email delivery and Auth.js session lifecycle require configured services. |
+| Preserve draft through sign-in and navigation | Implemented | Zustand draft and return navigation. Real magic-link round-trip resumption has not been verified. |
+| Canonical model catalog and metadata | Implemented; Tested with mocks | 85 documented generation endpoints: 18 image, 67 video, 36 families. Each entry has a source URL. Public documentation coverage is not account-specific availability. |
+| Exact request schemas, enum/range/conditional constraints, media roles | Implemented; Tested with mocks | Server revalidation and mapper examples cover every catalog endpoint. Structured settings use validated advanced JSON text. Provider-owned IDs without a tenant registry are excluded. |
+| Audio surface and all API media capabilities | Implemented unavailable state; Missing standalone audio REST | No standalone audio-generation REST endpoint was publicly verified. Video native audio and documented audio inputs are supported. CLI/connector job-set types are not exposed as REST paths. |
+| Provider submit/status/cancel/estimate/upload client | Implemented; Tested with mocks; Configuration required | Official origin and authorization, bounded retries, normalized states and outputs, exact idempotency keys; no live request success claimed. |
+| Server quotes, markup, credits and spend ceiling | Implemented; Tested with mocks | Live authenticated estimates are rechecked before debit; client `maxCredits` limits increases. Only three endpoints have exact public price rules; other prices stay unknown until quoted. Per-request USD cap is not a daily spending cap. |
+| Atomic debit, two credit buckets, ledger and concurrency | Implemented; Tested locally | Subscription credits spent first; top-up credits preserved; transactions prevent overdraw. Append-only grants/debits/refunds are idempotent. |
+| Ambiguous submission retry and deleted-request identity | Implemented; Tested locally | Exact payload/key retained; ambiguous acceptance remains pending. Tombstones preserve debit and request identity after deletion, preventing key reuse from changing billing. |
+| Failure/filter/cancel visible state and one refund | Implemented; Tested locally | Unit and browser checks cover failed, NSFW and repeated cancellation. Actual provider queued-cancel acceptance remains unverified. |
+| Fast callback acknowledgement and authoritative refresh | Implemented; Tested with mocks; Configuration required | Notification is saved before 2xx; Next `after()` performs status refetch/retention with a 300-second route budget. Invalid tokens do no work; failures leave notifications unprocessed. Real delivery latency remains unmeasured. |
+| Reconciliation and DB-only status polling | Implemented; Tested locally; Configuration required | Client polls stored status every 3.5 seconds. Local demo has an automatic worker in `instrumentation.ts`. Live cron is documented but not scheduled for showcase. Oldest pending work is processed fairly in bounded batches. |
+| Timeout behavior | Implemented deliberate deviation | Ambiguous paid work and retention failures are not automatically refunded at 15 minutes. Reconciliation preserves the original provider intent; an arbitrary refund could give away completed paid output. |
+| Private durable output retention and deletion | Implemented; Tested locally/mocked; Configuration required | Completion follows durable copy. Owner checks, public-access revocation, tombstones, cleanup retry and stale-worker lease fencing tested. Real R2 persistence is unverified. |
+| Signed direct uploads and owned references | Implemented; Tested locally/mocked; Configuration required | Metadata → provider PUT → byte verification → private retention. Exact headers, omitted browser credentials, origin allowlist, size/type checks and owner IDs. Real provider upload origins/CORS must be verified. |
+| Full output-format and input metadata coverage | Missing in part | ZIP/JSX/FBX/PLY artifacts lack completed retention support. Geometry/duration checks depend on trusted metadata; the app does not fully probe every supported media file. |
+| Stripe subscriptions, top-ups, Portal, webhook and receipts | Implemented; Tested with mocks; Configuration required | Server-selected prices, durable event queue, duplicate protection, subscription resets, cancellation, proportional refund clawback and receipt retries. Actual checkout/Portal/receipt delivery remains unverified. |
+| Commercial plan amounts and top-up offers | Configuration required | Free/Starter/Plus/Ultra and pack scaffolding exist. Prices and allowances need owner approval and matching Stripe IDs. No invented discount or enabled live checkout. |
+| Explore, Image, Video, Audio, Effects/detail, Community/detail | Implemented | Routes and original content present. Audio states its unsupported generation capability. Preset media are illustrations/fixtures, not app-generated production examples. |
+| Assets, Projects/detail, Pricing, Account/Billing, Login/check-email/error, Admin, Legal | Implemented; Tested locally in part | Browser checks cover projects, ownership and admin navigation. Full admin CRUD and every route/state have not received a deployed browser pass. Legal pages are explicitly draft text. |
+| Header/navigation, mobile menu, credit display and cookies | Implemented; Tested locally in part | Responsive navigation and essential/optional consent choices. Optional analytics are not installed. |
+| Generator, model search, modes, roles, settings and quotes | Implemented | Catalog-driven controls, reference library/upload, prompt count, advanced settings, sticky Generate and quote display. Provider model icons/looping previews are not cloned. |
+| History, lightbox, persistent status and asset actions | Implemented; Tested locally in part | Download, reuse, publication, project move and delete; animated/upscale actions only where a verified mapping exists. Cancel is a detail action, not the prompt's Generate-to-Cancel button substitution. |
+| Justified virtualized feed and 500+ item acceptance | Implemented alternative; Tested locally | Fixed-aspect grid with virtualization above 60 items and retained visited rows. The production-build 500-item fixture check reached the final item and returned to loaded rows without JavaScript exceptions. It is not the requested justified layout. |
+| Mobile and accessibility | Implemented; Tested locally in part | 390px no horizontal overflow/reachable Generate; Base UI focus/escape behavior, visible focus and reduced motion. Lighthouse 95+ and comprehensive keyboard/screen-reader checks are unmeasured. |
+| API ownership, public DTO, validation, rate limits and headers | Implemented; Tested locally/mocked | Cross-user media/project/generation denial, narrow public DTO, same-origin mutation checks, schema validation, HMAC, CSP/security headers and build secret scan. Production deployment remains to be inspected. |
+| Community report/moderation and private-by-default media | Implemented; Tested locally in part | Explicit publication, revocation and public DTO covered in the browser workflow. Full moderation interaction acceptance is outstanding. |
+| Setup and operator documentation | Implemented; Missing requested generator command | [README](../README.md) and [launch runbook](launch-runbook.md) exist. Model updates use the documented manual process; there is no `pnpm models` regeneration command. |
+| GitHub/Vercel publication and deployed E2E | Configuration/release verification required | Intended public repository: Fusion-Data-Company/Fusion-Gen-Matrix, branch Fusion-Data-Co. Record the actual commit and returned deployment URL after successful publication. |
+| Live cron and service operations | Configuration required | No showcase cron is intentional. Live schedule, secrets, reconciliation monitoring, approved legal copy and support ownership are covered in the runbook. |
+
+## Exact-clone and production acceptance gaps
+
+This is an **original rebranded implementation**, not a screenshot-perfect or template-derived clone. The visible differences include original typography/artwork, a fixed-ratio gallery instead of a justified gallery, original icons, limited preset content and no copied Quanta components. The source site's authenticated layouts were not fully available for comparison. Every-route desktop/mobile side-by-side parity is unproven.
+
+The production acceptance sequence is: configure MongoDB/Auth.js/Resend/R2/Higgsfield; verify signed-upload origins and browser CORS; verify one bounded real image and video workflow; schedule and exercise reconciliation; configure approved Stripe test prices and verify subscription/top-up/Portal/receipts; then approve legal content and paid launch. A real generation per documented family, original provider-generated hero/preset media, Lighthouse and deployed E2E remain outstanding.
+
+The final callback latency issue found in this audit was fixed and covered by focused tests. No further concrete blocker to a read-only showcase was established. A successful showcase must still pass its public browser and mutation-boundary checks in the [launch runbook](launch-runbook.md).
+
+Supercomputer agents, Canvas, Cinema multi-shot timelines, training, 3D, teams, Academy, contests, plugins and customer APIs remain outside the creator prompt's v1 scope.

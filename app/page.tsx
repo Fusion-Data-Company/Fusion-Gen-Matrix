@@ -1,0 +1,1 @@
+import {ExplorePage} from "@/components/explore";export default function Page(){return <ExplorePage/>;}

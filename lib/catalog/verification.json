@@ -1,0 +1,41 @@
+{
+  "verifiedAt": "2026-10-15T22:03:02.883588+00:00",
+  "catalog": {
+    "generationEndpoints": 85,
+    "imageEndpoints": 18,
+    "videoEndpoints": 67,
+    "audioEndpoints": 0,
+    "documentedFamilies": 36,
+    "publicDocumentationPages": 133,
+    "additionalConsoleSnapshots": 3
+  },
+  "tests": {
+    "command": "node node_modules/vitest/vitest.mjs run tests/catalog.test.ts",
+    "passed": 101,
+    "failed": 0,
+    "liveProviderRequests": 0
+  },
+  "lint": {
+    "command": "node node_modules/eslint/bin/eslint.js lib/catalog/*.ts lib/higgsfield/*.ts tests/catalog.test.ts",
+    "exitCode": 0
+  },
+  "typecheck": {
+    "catalogProviderErrors": 0,
+    "lastProjectBlocker": "lib/generations/service.ts:168 showcase mode union pending root integration"
+  },
+  "liveVerification": {
+    "credentialsRead": false,
+    "credentialsCreated": false,
+    "paidGenerationSubmitted": false,
+    "accountSpecificAccessVerified": false
+  },
+  "sha256": {
+    "lib/catalog/types.ts": "efd945648123e474ef27989728cf92389cf44b5ee2603f802fb2b5f3a57de05c",
+    "lib/catalog/index.ts": "68021d71ea54d263c3c764c43784d963dbf16fb8c87df8faffa42edb93c43e7e",
+    "lib/catalog/server.ts": "10133229d826b7abf17e1ee8e5ccdc1e3adebb5ce8a82a6fa6e2bb200e53f838",
+    "lib/higgsfield/types.ts": "6e8665e217c99aca99e215cdb16f3927675eb2cc63d683560d26fd94d66b6e4f",
+    "lib/higgsfield/client.ts": "71e4e09f0813cabe0b8bdf8df446e4f9f6f4f5d8d83b4960210e3897090b4846",
+    "lib/higgsfield/webhook.ts": "d4f286ba45ef96031efd69319de7af1716bcbe975381d23aa9d88dfaaa2fa815",
+    "tests/catalog.test.ts": "b279c44820a8dd4d4f54219ecf6c6905f9dbe0ae37ad0879ace6b94aed9c104c"
+  }
+}
