@@ -1,0 +1,17 @@
+node_modules/
+.next/
+.tool-cache/
+.data/
+.env*
+!.env.example
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+.vercel/
+.DS_Store
+AGENTS.md
+docs/deployment-access.md
+docs/evidence/
+lib/catalog/source-docs.json
+lib/catalog/console-docs.json
