@@ -2,9 +2,9 @@
 
 Fusion Gen Matrix is an original Fusion-branded image and video studio with model-driven controls, owned media references, projects, an asset library, community publishing, a credit ledger, and server integrations for Higgsfield, Auth.js/Resend, MongoDB, Cloudflare R2, and Stripe.
 
-[Source repository](https://github.com/Fusion-Data-Company/Fusion-Gen-Matrix) · [Launch runbook](docs/launch-runbook.md) · [Model catalog](docs/model-catalog.md)
+[Public showcase](https://fusion-gen-matrix.vercel.app) · [Source repository](https://github.com/Fusion-Data-Company/Fusion-Gen-Matrix) · [Launch runbook](docs/launch-runbook.md) · [Model catalog](docs/model-catalog.md)
 
-The current publication target is a **read-only public showcase**. Local demo workflows are interactive and use labeled sample media. Paid generation, real email sign-in, private cloud storage, and Stripe checkout require live configuration and their own acceptance checks.
+The published app is a **read-only public showcase**. Local demo workflows are interactive and use labeled sample media. Paid generation, real email sign-in, private cloud storage, and Stripe checkout require live configuration and their own acceptance checks.
 
 ## Choose the right mode
 
@@ -58,7 +58,8 @@ APP_MODE=showcase pnpm start
 - Catalog-driven settings and media roles, server validation, owned-reference checks, visible quotes, and an idempotent submission intent.
 - Separate subscription and top-up credit buckets, atomic debits, terminal failure refunds, subscription renewal handling, and signed Stripe event processing.
 - Durable media retention before a provider result is marked complete, private media access, and a browser direct-upload protocol for live hosting.
-- Responsive interface, accessible dialogs, keyboard focus states, and a virtualized gallery.
+- Responsive interface, accessible dialogs, keyboard focus states, and an aspect-ratio-aware justified gallery. Large feeds retain visited cards across scrolling and layout changes.
+- The primary Generate control becomes Cancel queued generation while owned work is queued; credit return is shown only after confirmed cancellation.
 
 The source snapshot verified on **2026-10-15 contains 85 generation endpoints: 18 image and 67 video**. This means their public request contracts were verified, not that all endpoints were successfully used with this account. No standalone audio-generation REST endpoint was verified. The audio page explains that limit; documented video audio settings and audio reference inputs remain available where a model supports them. See [coverage, exclusions and sources](docs/model-catalog.md).
 

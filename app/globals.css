@@ -19,3 +19,16 @@
 @media(max-width:760px){
   .app-shell:has(.studio-layout) .cookie-banner{bottom:108px}
 }
+
+/* Aspect-preserving gallery rows share a media height and include card borders in their width budget. */
+.justified-gallery{min-width:0;max-width:100%}
+.justified-content{display:grid;grid-template-columns:minmax(0,1fr)}
+.justified-tile{grid-column:1;display:flex;min-width:0}
+.justified-measure{grid-column:1;visibility:hidden;pointer-events:none;min-width:0}
+.justified-tile .media-frame{flex-shrink:0}
+.justified-tile .media-frame img,.justified-tile .media-frame video{object-fit:contain}
+.justified-tile .media-info{flex:1}
+.justified-tile .media-card{display:flex;flex-direction:column}
+.justified-tile .media-meta .mono{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.justified-tile .media-meta .status-badge{flex-shrink:0}
+.justified-gallery:focus-visible{outline:2px solid var(--lime);outline-offset:3px}

@@ -1,5 +1,5 @@
 "use client";
-import {useState,useEffect,useRef,useCallback} from "react";
+import {useState,useEffect,useRef,useCallback,useMemo} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
@@ -8,6 +8,7 @@ import {Download,Copy,Video,Globe,Trash2,FolderPlus,RefreshCw,Square,Music2,Load
 import type {GenerationView,Project} from "@/lib/types";
 import {api,post,messageOf,isActive,formatDate} from "@/lib/client/api";
 import {useDock} from "@/lib/client/dock";
+import {justifiedRows} from "@/lib/client/gallery-layout";
 import {useStudio} from "./studio-context";
 import {Modal,ErrorNotice,StatusBadge} from "./ui";
 export function OutputMedia({generation,detail=false}:{generation:GenerationView;detail?:boolean}) {
@@ -20,19 +21,43 @@ export function GenerationGallery({items,onChange,dense=false,selection,onSelect
  const {data}=useStudio();
  const [detailId,setDetail]=useState<string|null>(null);
  const detail=items.find(item=>item.id===detailId)??null;
- const card=(item:GenerationView)=><article className={"media-card "+(selection?.has(item.id)?"selected":"")} key={item.id}>{onSelect&&<input className="media-select" type="checkbox" aria-label={"Select generation "+item.prompt.slice(0,40)} checked={selection?.has(item.id)??false} onChange={()=>onSelect(item.id)}/>}<div className="media-frame" tabIndex={0} role="button" aria-label={"Open generation "+(item.prompt||item.id)} onClick={e=>{if(!(e.target instanceof HTMLElement)||!e.target.closest("audio,video[controls]"))setDetail(item.id);}} onKeyDown={e=>{if(e.target!==e.currentTarget)return;if(e.key==="Enter"||e.key===" "){e.preventDefault();setDetail(item.id);}}}><OutputMedia generation={item}/></div><div className="media-info"><p>{item.prompt||"Reference-based generation"}</p><div className="media-meta"><span className="mono">{formatDate(item.createdAt)}</span><StatusBadge status={item.status}/></div></div><div className="media-actions">{item.outputs[0]&&(item.isPublic||data?.user?.id===item.userId)&&<a className="icon-button" href={item.outputs[0].url} download title="Download output" aria-label="Download output"><Download size={15}/></a>}<button className="icon-button" title="View prompt and actions" aria-label="View prompt and actions" onClick={()=>setDetail(item.id)}><ArrowUpRight size={15}/></button></div></article>;
- return <>{items.length>60?<VirtualGallery items={items} render={card} dense={dense}/>:<div className={"media-grid "+(dense?"dense":"")}>{items.map(card)}</div>}<Modal open={!!detail} onClose={()=>setDetail(null)} title="Generation details" wide>{detail&&<GenerationDetail generation={detail} publicView={publicView} onChange={async()=>{await onChange();}} onDelete={()=>setDetail(null)}/>}</Modal></>;
+ const card=(item:GenerationView,width:number,height:number)=><article style={{width,flexShrink:0}} className={"media-card "+(selection?.has(item.id)?"selected":"")} key={item.id}>{onSelect&&<input className="media-select" type="checkbox" aria-label={"Select generation "+item.prompt.slice(0,40)} checked={selection?.has(item.id)??false} onChange={()=>onSelect(item.id)}/>}<div className="media-frame" style={{height,aspectRatio:"auto"}} tabIndex={0} role="button" aria-label={"Open generation "+(item.prompt||item.id)} onClick={e=>{if(!(e.target instanceof HTMLElement)||!e.target.closest("audio,video[controls]"))setDetail(item.id);}} onKeyDown={e=>{if(e.target!==e.currentTarget)return;if(e.key==="Enter"||e.key===" "){e.preventDefault();setDetail(item.id);}}}><OutputMedia generation={item}/></div><div className="media-info"><p>{item.prompt||"Reference-based generation"}</p><div className="media-meta"><span className="mono">{formatDate(item.createdAt)}</span><StatusBadge status={item.status}/></div></div><div className="media-actions">{item.outputs[0]&&(item.isPublic||data?.user?.id===item.userId)&&<a className="icon-button" href={item.outputs[0].url} download title="Download output" aria-label="Download output"><Download size={15}/></a>}<button className="icon-button" title="View prompt and actions" aria-label="View prompt and actions" onClick={()=>setDetail(item.id)}><ArrowUpRight size={15}/></button></div></article>;
+ return <>{<JustifiedGallery items={items} render={card} dense={dense}/>}<Modal open={!!detail} onClose={()=>setDetail(null)} title="Generation details" wide>{detail&&<GenerationDetail generation={detail} publicView={publicView} onChange={async()=>{await onChange();}} onDelete={()=>setDetail(null)}/>}</Modal></>;
 }
-function VirtualGallery({items,render,dense}:{items:GenerationView[];render:(item:GenerationView)=>React.ReactNode;dense:boolean}) {
+function JustifiedGallery({items,render,dense}:{items:GenerationView[];render:(item:GenerationView,width:number,height:number)=>React.ReactNode;dense:boolean}) {
  "use no memo";
- const parent=useRef<HTMLDivElement>(null);const visited=useRef(new Set<number>());const [columns,setColumns]=useState(dense?4:3);
- useEffect(()=>{const target=parent.current;if(!target)return;const observer=new ResizeObserver(entries=>{const width=entries[0]?.contentRect.width??900;setColumns(width<550?2:width<900?3:dense?4:3);});observer.observe(target);return()=>observer.disconnect();},[dense]);
- // Retain visited rows: loaded media stays mounted during fast scrolling.
- const rangeExtractor=useCallback((range:Parameters<typeof defaultRangeExtractor>[0])=>{defaultRangeExtractor(range).forEach(index=>visited.current.add(index));return [...visited.current].filter(index=>index<Math.ceil(items.length/columns)).sort((a,b)=>a-b);},[items.length,columns]);
+ const parent=useRef<HTMLDivElement>(null),visited=useRef(new Set<string>());
+ const [width,setWidth]=useState(0);
+ const virtual=items.length>60;
+ useEffect(()=>{
+  const target=parent.current;if(!target)return;
+  const observer=new ResizeObserver(entries=>setWidth(Math.floor(entries[0]?.contentRect.width??0)));
+  observer.observe(target);return()=>observer.disconnect();
+ },[]);
+ const rows=useMemo(()=>justifiedRows(items,width,dense),[items,width,dense]);
+ // Retain visited media through fast scrolling, including when status updates regroup a row.
+ const rangeExtractor=useCallback((range:Parameters<typeof defaultRangeExtractor>[0])=>{
+  defaultRangeExtractor(range).forEach(index=>rows[index]?.tiles.forEach(tile=>visited.current.add(tile.item.id)));
+  return rows.flatMap((row,index)=>row.tiles.some(tile=>visited.current.has(tile.item.id))?[index]:[]);
+ },[rows]);
+ const getItemKey=useCallback((index:number)=>rows[index].key,[rows]);
  // TanStack Virtual uses imperative measurements and intentionally stays outside React Compiler memoization.
  // eslint-disable-next-line react-hooks/incompatible-library
- const virtualizer=useVirtualizer({count:Math.ceil(items.length/columns),getScrollElement:()=>parent.current,estimateSize:()=>330,overscan:3,rangeExtractor});
- return <div className="virtual-gallery" ref={parent}><div style={{height:virtualizer.getTotalSize(),position:"relative"}}>{virtualizer.getVirtualItems().map(row=><div key={row.key} data-index={row.index} ref={virtualizer.measureElement} className="virtual-row" style={{transform:"translateY("+row.start+"px)",gridTemplateColumns:"repeat("+columns+",minmax(0,1fr))",paddingBottom:14}}>{items.slice(row.index*columns,(row.index+1)*columns).map(render)}</div>)}</div></div>;
+ const virtualizer=useVirtualizer({count:rows.length,getScrollElement:()=>parent.current,estimateSize:index=>rows[index].height+140,overscan:3,rangeExtractor,getItemKey,enabled:virtual&&width>0});
+ // Cards remain flat, keyed siblings: regrouping rows must not remount focused media.
+ const measurements=virtualizer.getVirtualItems();
+ const visibleRows=new Set(virtual?measurements.map(item=>item.index):rows.map((_,index)=>index));
+ const tiles=rows.flatMap((row,index)=>{
+  if(!visibleRows.has(index))return [];
+  let left=0;
+  return row.tiles.map(tile=>{const position={...tile,row:index,height:row.height,gap:row.gap,left};left+=tile.width+row.gap;return position;});
+ });
+ return <div className={"justified-gallery"+(virtual?" virtual-gallery":"")} ref={parent} role="region" tabIndex={virtual?0:undefined} aria-label="Generation gallery" aria-busy={width===0}>
+  <div className="justified-content" style={{gridTemplateRows:rows.map((row,index)=>visibleRows.has(index)?"auto":(row.height+140)+"px").join(" ")}}>
+   {virtual&&measurements.map(measurement=><div key={rows[measurement.index].key} data-index={measurement.index} ref={virtualizer.measureElement} aria-hidden="true" className="justified-measure" style={{gridRow:measurement.index+1}}/>)}
+   {tiles.map(tile=><div key={tile.item.id} className="justified-tile" style={{gridRow:tile.row+1,width:tile.width,marginLeft:tile.left,paddingBottom:tile.gap}}>{render(tile.item,tile.width,tile.height)}</div>)}
+  </div>
+ </div>;
 }
 export function GenerationDetail({generation,onChange,onDelete,publicView=false}:{generation:GenerationView;onChange:()=>Promise<void>|void;onDelete?:()=>void;publicView?:boolean}) {
  const {data,requireLogin,notice,reload}=useStudio();const router=useRouter();const updateDraft=useDock(state=>state.update);

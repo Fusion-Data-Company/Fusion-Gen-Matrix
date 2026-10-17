@@ -1,10 +1,19 @@
 # Release verification
 
-Checkpoint: 2026-10-15, America/Los_Angeles (PDT).
+Latest checkpoint: 2026-10-17 (UTC). The original full-suite checkpoint below is from 2026-10-15, America/Los_Angeles (PDT).
 
-This record describes the reviewed source before public deployment. The release is a read-only showcase. Interactive preview workflows use labeled sample media on a loopback-only local server.
+The release is published as a [read-only showcase](https://fusion-gen-matrix.vercel.app). Interactive preview workflows use labeled sample media on a loopback-only local server.
 
-## Completed checks
+## 2026-10-17 follow-up
+
+- Public baseline `a65d233cae8be632712f3a992346067b8369932f` matched GitHub and Vercel production. Fifteen public routes returned 200; private APIs returned 401; four attempted mutations returned 503 / `SHOWCASE_READ_ONLY`. The catalog exposed 85 models with generation, authentication, uploads and billing disabled. Desktop/mobile navigation, model search and settings were checked with no browser errors or horizontal overflow.
+- Added justified row packing and direct queued cancellation. Six geometry regressions passed over 500 mixed-ratio inputs at seven widths in both density modes. Targeted ESLint, the Node.js 22 production build (including TypeScript), and the 72-file client secret scan passed. The older full suite was not rerun for this UI-only follow-up.
+- A separate production-build loopback preview used 500 labeled original SVG fixtures and isolated file storage. Portrait, square and landscape ratios were preserved at 1440px and 390px. Keyboard End reached fixture 500; earlier images remained mounted; no image failures were observed. Filtering down to one asset and selecting it worked without overflow.
+- Keyboard focus survived viewport regrouping and a queued-to-completed update that changed the output dimensions. Enter opened details and Escape returned focus. Density toggling also passed. A review found and fixed row-level remounting and cancel/Generate button reuse during polling; the focused rereview found no remaining actionable issue.
+- Submitting and immediately canceling a local preview showed CANCELED, restored the balance from a 4-credit debit to 200, and restored the Generate control. A separate completed preview left 196 credits. These are local ledger checks, not paid provider or payment acceptance.
+- Browser warning/error capture was empty. These checks do not establish Lighthouse scores, a timed load benchmark, full screen-reader acceptance, or every provider's live behavior.
+
+## Original full-suite checks
 
 | Check | Result and environment |
 | --- | --- |
@@ -28,7 +37,7 @@ Run the commands in the [launch runbook](launch-runbook.md). Browser runners req
 
 ## Remaining acceptance
 
-Public deployment verification must be recorded after the returned deployment becomes ready. A ready deployment alone does not certify the browser experience.
+The public showcase has been verified. Release-specific deployment IDs, commit SHAs and inspection details are retained in ignored `docs/evidence/`; a READY deployment alone does not certify live services.
 
 No real Higgsfield generation, MongoDB transaction, magic-link email, private R2 round trip, provider upload CORS, Stripe checkout or receipt delivery was verified. Live configuration and bounded acceptance remain required. No paid generation or payment was performed.
 
