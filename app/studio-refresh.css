@@ -97,3 +97,6 @@ h1{font-size:42px}h2{font-size:30px}h3{font-weight:600}
  .effects-page .section-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.effects-page .feature-info{padding:13px 10px}.effects-page .feature-info h3{font-size:21px}.effects-page .feature-info p{font-size:10px}.effect-detail{gap:22px}.dialog-popup{padding:20px;border-radius:16px}.dialog-heading h2{font-size:27px}.model-picker-grid{grid-template-columns:1fr}.library-layout{gap:20px}
 }
 @media(prefers-reduced-motion:reduce){.run-state.active{animation:none}.concept-art img,.guide-hover{transition:none}}
+
+/* Keep the first-visit notice above the measured floating composer, including reference inputs. */
+.app-shell.workspace-shell:has(.image-studio) .cookie-banner{bottom:calc(var(--image-composer-height,220px) + 32px);max-height:max(80px,calc(100dvh - var(--image-composer-height,220px) - 120px));overflow:auto}

@@ -24,6 +24,14 @@ export function GeneratorPage({surface}:{surface:Surface}) {
  const draft=useDock(state=>state.drafts[surface]),update=useDock(state=>state.update);
  const [picker,setPicker]=useState(false),[settingsOpen,setSettingsOpen]=useState(false),[uploadRole,setUploadRole]=useState<Role|null>(null),[modelSearch,setModelSearch]=useState(""),[busy,setBusy]=useState(false),[cancelBusy,setCancelBusy]=useState(false),[error,setError]=useState(""),[quoteState,setQuoteState]=useState<{payload:string;value:Quote}|null>(null),[quoteError,setQuoteError]=useState(""),[tab,setTab]=useState<"history"|"help">("history"),[dense,setDense]=useState(false),[mode,setMode]=useState("create"),[inputMode,setInputMode]=useState(""),[projects,setProjects]=useState<Project[]>([]),[demoOutcome,setDemoOutcome]=useState("completed");
  const [historyFilter,setHistoryFilter]=useState<HistoryFilter>("all"),[historySearch,setHistorySearch]=useState(""),[list,setList]=useState(false);
+ const composerPanel=useRef<HTMLElement|null>(null);
+ useEffect(()=>{
+  if(surface!=="image"||!composerPanel.current)return;
+  const panel=composerPanel.current,shell=panel.closest<HTMLElement>(".app-shell");if(!shell)return;
+  const measure=()=>shell.style.setProperty("--image-composer-height",Math.ceil(panel.getBoundingClientRect().height)+"px");
+  measure();const observer=new ResizeObserver(measure);observer.observe(panel);
+  return()=>{observer.disconnect();shell.style.removeProperty("--image-composer-height");};
+ },[surface,loading]);
  const initialized=useRef(""),pending=useRef(false);
  const submissionIntent=useRef<{key:string;payload:string;userId:string}|null>(null);
  const models=useMemo(()=>data?.models.filter(item=>item.surface===surface)??[],[data?.models,surface]);
@@ -61,7 +69,7 @@ export function GeneratorPage({surface}:{surface:Surface}) {
  const showRoles=model?.roles.filter(role=>role.required||!inputMode||inputMode!=="text")??[];
  if(loading)return <Spinner label="Loading the studio"/>;
  if(!models.length)return <section className="page-wrap"><EmptyState icon={<Music2 size={28}/>} title={surface==="audio"?"Audio is not connected yet":"No verified models available"} description={surface==="audio"?"No standalone audio endpoint has been verified in the public REST catalog. Audio generation will appear here when an endpoint and its pricing are confirmed.":"This surface has no verified model configuration. Try another studio."} action={<Link href="/image" className="button">Open image studio<ArrowUpRight size={16}/></Link>}/></section>;
- return <div className={"studio-layout "+surface+"-studio"}><aside className="generator-panel" aria-label="Generation controls"><div className="generator-panel-body">
+ return <div className={"studio-layout "+surface+"-studio"}><aside ref={composerPanel} className="generator-panel" aria-label="Generation controls"><div className="generator-panel-body">
   <div className="panel-top"><h1>{surfaceTitle[surface]}</h1><span className="surface-mark">CREATE / {surface.toUpperCase()}</span></div>
   <div className="mode-tabs" aria-label="Generation category">{[{id:"create",label:surface==="video"?"Create Video":"Create"},{id:"edit",label:surface==="video"?"Edit Video":"Edit"},...(surface==="video"?[{id:"motion",label:"Motion Control"}]:[])].map(item=><button key={item.id} className={mode===item.id?"active":""} onClick={()=>{setMode(item.id);setPicker(true);}}>{item.label}</button>)}</div>
   <div className="model-section"><div className="control-label">Model<span className="tag">{model?.provider}</span></div><button className="model-control" onClick={()=>setPicker(true)} aria-label="Change model"><ConceptArt scene={surface==="video"?3:0}/><span className="model-monogram">{surface==="video"?<Film size={18}/>:<ImageIcon size={18}/>}</span><span><small>{model?.family||"Creative production"}</small><strong>{model?.label}</strong></span><ChevronDown size={17}/></button><p className="small soft model-description" style={{marginTop:8,fontSize:10}}>{model?.description}</p></div>
