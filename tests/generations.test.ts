@@ -4,7 +4,7 @@ import path from "node:path";
 import {randomUUID} from "node:crypto";
 import {FileRepository} from "../lib/db/repository";
 import {debit,refund} from "../lib/billing/ledger";
-import {GenerationService,type GenerationInput} from "../lib/generations/service";
+import {GenerationService,inputSchema,type GenerationInput} from "../lib/generations/service";
 import {HiggsfieldError} from "../lib/higgsfield/client";
 import type {Generation,Profile,Output} from "../lib/types";
 let dir:string,repo:FileRepository;
@@ -116,6 +116,44 @@ describe("atomic credits and generation lifecycle",()=>{
   expect((await repo.read(tx=>tx.get("generations",g.id)))?.status).toBe("canceled");
   expect((await repo.read(tx=>tx.get("profiles","owner")))?.subscriptionCredits).toBe(8);
   expect(await repo.read(tx=>tx.find("credit_ledger",{reason:"generation_refund"}))).toHaveLength(1);
+ });
+ it("uses the selected owned output for a reference and retains its identity",async()=>{
+  const {service,retain,mediaUrl}=engine({mode:"live"});
+  const second:Output={...output,url:"/api/media/u/owner/generations/sample/1.png",r2Key:"u/owner/generations/sample/1.png",width:1280,height:960};
+  retain.mockResolvedValue([output,second]);
+  const source=await service.create("owner",{...input,maxCredits:4},randomUUID());
+  await service.apply(source,{requestId:source.requestId!,status:"completed",outputs:[]});
+  mediaUrl.mockClear();
+  const edit=await service.create("owner",{...input,modelId:"alibaba/qwen-image-3/edit",media:[{id:source.id,outputIndex:1,role:"reference"}],maxCredits:4},randomUUID());
+  expect(mediaUrl).toHaveBeenCalledWith(expect.objectContaining({r2Key:second.r2Key,contentType:"image/png"}));
+  expect(edit.media).toEqual([expect.objectContaining({id:source.id,outputIndex:1,url:second.url,width:1280,height:960})]);
+  const saved=await new FileRepository(dir).read(tx=>tx.get("generations",edit.id));
+  expect(saved?.media[0].outputIndex).toBe(1);
+ });
+ it("rejects missing, wrong-kind and foreign outputs before a provider call or debit",async()=>{
+  const {service,retain,provider,mediaUrl}=engine({mode:"live"});
+  retain.mockResolvedValue([output,{...output,kind:"video",contentType:"video/mp4",url:"/second.mp4"}]);
+  const source=await service.create("owner",{...input,maxCredits:4},randomUUID());
+  await service.apply(source,{requestId:source.requestId!,status:"completed",outputs:[]});
+  provider.estimate.mockClear();provider.submit.mockClear();mediaUrl.mockClear();
+  const edit:GenerationInput={...input,modelId:"alibaba/qwen-image-3/edit",media:[{id:source.id,outputIndex:2,role:"reference"}],maxCredits:4};
+  await expect(service.create("owner",edit,randomUUID())).rejects.toMatchObject({code:"MEDIA_UNAVAILABLE"});
+  await expect(service.create("owner",{...edit,media:[{id:source.id,outputIndex:1,role:"reference"}]},randomUUID())).rejects.toMatchObject({code:"UNSUPPORTED_REFERENCE"});
+  await expect(service.create("other",{...edit,media:[{id:source.id,outputIndex:0,role:"reference"}]},randomUUID())).rejects.toMatchObject({status:404});
+  expect(provider.estimate).not.toHaveBeenCalled();expect(provider.submit).not.toHaveBeenCalled();expect(mediaUrl).not.toHaveBeenCalled();
+  expect((await repo.read(tx=>tx.get("profiles","owner")))?.subscriptionCredits).toBe(4);
+  expect(await repo.read(tx=>tx.find("generations"))).toHaveLength(1);
+ });
+ it("keeps legacy references without an output index working",async()=>{
+  const {service,mediaUrl}=engine({mode:"live"}),source=await service.create("owner",{...input,maxCredits:4},randomUUID());
+  await service.apply(source,{requestId:source.requestId!,status:"completed",outputs:[]});mediaUrl.mockClear();
+  await service.quote("owner",{...input,modelId:"alibaba/qwen-image-3/edit",media:[{id:source.id,role:"reference"}]});
+  expect(mediaUrl).toHaveBeenCalledWith(expect.objectContaining({r2Key:output.r2Key}));
+ });
+ it("rejects malformed output selectors at the request boundary",()=>{
+  for(const outputIndex of [-1,0.5,100,"1"]){
+   expect(inputSchema.safeParse({...input,media:[{id:"owned-result",role:"reference",outputIndex}]}).success).toBe(false);
+  }
  });
  it("rejects deleted generation references before provider upload, quote, or debit",async()=>{
   const {service,provider,mediaUrl}=engine({mode:"live"}),g=await service.create("owner",{...input,maxCredits:4},randomUUID());

@@ -17,7 +17,7 @@ import type {Generation,Media,Output} from "../types";
 export const inputSchema=z.object({
  modelId:z.string().min(1).max(200),prompt:z.string().max(30000).default(""),
  settings:z.record(z.string(),z.union([z.string().max(30000),z.number().finite(),z.boolean()])).default({}),
- media:z.array(z.object({id:z.string().min(1).max(200),role:z.enum(["start","end","reference","video","audio","source"])}).strict()).max(50).default([]),
+ media:z.array(z.object({id:z.string().min(1).max(200),outputIndex:z.number().int().min(0).max(99).optional(),role:z.enum(["start","end","reference","video","audio","source"])}).strict()).max(50).default([]),
  projectId:z.string().max(200).optional(),presetId:z.string().max(200).optional(),
  demoOutcome:z.enum(["completed","failed","nsfw"]).optional(),maxCredits:z.number().int().positive().max(1000000).optional()
 }).strict();
@@ -52,6 +52,7 @@ export class GenerationService{
    for(const item of input.media){
     const upload=await tx.get("uploads",item.id);
     if(upload&&upload.userId===userId&&upload.status!=="pending"){
+     if(item.outputIndex!==undefined)throw new AppError("INVALID_REFERENCE","Output selection only applies to generated assets.");
      if(!upload.r2Key)throw new AppError("MEDIA_UNAVAILABLE","This attachment needs to be uploaded again.");
      const url=this.options.mode==="demo"?"https://preview.invalid/"+encodeURIComponent(item.id):await this.options.mediaUrl({r2Key:upload.r2Key,contentType:upload.contentType,providerUrl:upload.providerUrl});
      media.push({id:upload.id,url:upload.url,kind:upload.kind,role:item.role,contentType:upload.contentType,bytes:upload.bytes,width:upload.width,height:upload.height,durationSec:upload.durationSec});
@@ -60,10 +61,11 @@ export class GenerationService{
     const g=await tx.get("generations",item.id);
     if(!g||g.deletedAt||g.userId!==userId||g.status!=="completed"||!g.outputs.length)notFound();
     const expectedKind=getModel(input.modelId)?.roles.find(role=>role.role===item.role)?.kind;
-    const output=g.outputs.find(output=>output.kind===expectedKind);
-    if(!output||output.kind==="artifact")throw new AppError("UNSUPPORTED_REFERENCE","Downloadable files cannot be used as image, video, or audio references.",400);
+    const output=item.outputIndex===undefined?g.outputs.find(output=>output.kind===expectedKind):g.outputs[item.outputIndex];
+    if(!output)throw new AppError("MEDIA_UNAVAILABLE","This output is unavailable. Choose another reference.",404);
+    if(output.kind==="artifact"||output.kind!==expectedKind)throw new AppError("UNSUPPORTED_REFERENCE","Choose a compatible image, video, or audio output for this reference.",400);
     const url=this.options.mode==="demo"?"https://preview.invalid/"+encodeURIComponent(item.id):await this.options.mediaUrl({r2Key:output.r2Key,contentType:output.contentType});
-    media.push({id:g.id,url:output.url,kind:output.kind,role:item.role,contentType:output.contentType,width:output.width,height:output.height,durationSec:output.durationSec});
+    media.push({id:g.id,...(item.outputIndex===undefined?{}:{outputIndex:item.outputIndex}),url:output.url,kind:output.kind,role:item.role,contentType:output.contentType,width:output.width,height:output.height,durationSec:output.durationSec});
     providerMedia.push({...media.at(-1)!,url});
    }
   });

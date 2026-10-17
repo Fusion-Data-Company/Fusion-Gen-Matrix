@@ -6,8 +6,8 @@ import type {Generation} from "../lib/types";
 const job=(id:string,status:Generation["status"],updatedAt="2026-10-17T01:00:00Z")=>({id,status,updatedAt,prompt:"A cobalt studio",modelId:"model-one"} as Generation);
 describe("durable drafts",()=>{
  it("restores a recent prompt and owned references while rejecting external URLs",()=>{
-  const saved={...blankSnapshot(),updatedAt:1000};saved.drafts.image={modelId:"one",prompt:"Keep this creative direction",settings:{ratio:"3:2"},media:[{id:"a",url:"/api/media/u/user/uploads/a.png",kind:"image",role:"reference"},{id:"b",url:"https://external.invalid/file",kind:"image",role:"reference"}]};
-  const restored=restoreDrafts(saved,1001);expect(restored.drafts.image.prompt).toBe(saved.drafts.image.prompt);expect(restored.drafts.image.media.map(item=>item.id)).toEqual(["a"]);
+  const saved={...blankSnapshot(),updatedAt:1000};saved.drafts.image={modelId:"one",prompt:"Keep this creative direction",settings:{ratio:"3:2"},media:[{id:"a",outputIndex:1,url:"/api/media/u/user/generations/a/1.png",kind:"image",role:"reference"},{id:"b",url:"https://external.invalid/file",kind:"image",role:"reference"}]};
+  const restored=restoreDrafts(saved,1001);expect(restored.drafts.image.prompt).toBe(saved.drafts.image.prompt);expect(restored.drafts.image.media.map(item=>item.id)).toEqual(["a"]);expect(restored.drafts.image.media[0].outputIndex).toBe(1);
  });
  it("expires old and future timestamps and tolerates corrupt storage",()=>{
   const saved={...blankSnapshot(),updatedAt:1000};saved.drafts.image.prompt="private draft";

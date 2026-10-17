@@ -12,7 +12,7 @@ export function restoreDrafts(value:unknown,now=Date.now()):DraftSnapshot {
   const draft=value.drafts[surface];if(!object(draft))continue;
   const settings:Settings={};
   if(object(draft.settings))for(const [key,entry] of Object.entries(draft.settings).slice(0,100))if(!["__proto__","constructor","prototype"].includes(key)&&(typeof entry==="boolean"||typeof entry==="number"&&Number.isFinite(entry)||typeof entry==="string"&&entry.length<=30000))settings[key]=entry;
-  const media:Media[]=Array.isArray(draft.media)?draft.media.filter((item):item is Media=>object(item)&&typeof item.id==="string"&&typeof item.url==="string"&&item.url.startsWith("/api/media/u/")&&["image","video","audio"].includes(String(item.kind))&&["start","end","reference","video","audio","source"].includes(String(item.role))).slice(0,50):[];
+  const media:Media[]=Array.isArray(draft.media)?draft.media.filter((item):item is Media=>object(item)&&typeof item.id==="string"&&(item.outputIndex===undefined||typeof item.outputIndex==="number"&&Number.isInteger(item.outputIndex)&&item.outputIndex>=0&&item.outputIndex<100)&&typeof item.url==="string"&&item.url.startsWith("/api/media/u/")&&["image","video","audio"].includes(String(item.kind))&&["start","end","reference","video","audio","source"].includes(String(item.role))).slice(0,50):[];
   empty.drafts[surface]={modelId:typeof draft.modelId==="string"?draft.modelId.slice(0,200):"",prompt:typeof draft.prompt==="string"?draft.prompt.slice(0,30000):"",settings,media,...(typeof draft.projectId==="string"?{projectId:draft.projectId.slice(0,200)}:{}),...(typeof draft.presetId==="string"?{presetId:draft.presetId.slice(0,200)}:{})};
  }
  return {...empty,ownerId:typeof value.ownerId==="string"?value.ownerId:null,updatedAt:value.updatedAt};

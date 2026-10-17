@@ -37,13 +37,13 @@ A fresh October 17 rendered inspection obtained public Explore, image and video 
 | /legal/terms, /legal/privacy, /legal/acceptable-use | Explicit draft placeholders requiring owner/legal review before live registration/payments |
 
 ## Generator and media states
-- Input controls are derived from verified model definitions; client submits model ID, scalar settings and owned media IDs only.
+- Input controls are derived from verified model definitions; client submits model ID, scalar settings and owned media IDs with optional output indexes; media URLs are resolved by the server.
 - Optional advanced structured settings accept JSON text and are validated on the server.
 - Quotes run only for signed-in interactive sessions. A new input payload invalidates the old displayed quote. Live submits include maxCredits from the displayed quote.
 - Generate creates a UUID per submission intent, retaining the key and exact request across ambiguous network/5xx retries. A confirmed response or changed request ends that intent. Inputs persist on the same device for 24 hours across navigation, reload and sign-in; sign-out/account changes clear private drafts. Cross-tab updates synchronize.
 - Queued/running, completed, failed, content-filtered and canceled records stay visible.
 - Status polling uses the database-only status endpoint every 3.5 seconds while visible, batches 50 active IDs, avoids overlapping calls and ignores stale/regressive updates. Refresh is an explicit action.
-- Complete detail provides download(s), prompt copy, reuse, image-to-video reference, publish/unpublish, move and delete where permitted.
+- Complete detail provides an output chooser, download(s), prompt copy, reuse, image-to-video reference from the selected output, publish/unpublish, move and delete where permitted. Selected output identity survives draft restoration; reused optional references remain visible.
 - Content-filter and failure messages come from the server; the UI does not invent refund success.
 - Public records omit costs and private reference inputs. Cost is shown only when the server provides it.
 - Admin views of other users’ unpublished media show an explicit private-output tile without bypassing ownership.
@@ -68,7 +68,7 @@ A fresh October 17 rendered inspection obtained public Explore, image and video 
 - public/art/motion-study.svg — original intersecting-ring motion study.
 - public/art/architecture.svg — original architectural arch study.
 - All are labeled illustrations, not provider-generated results.
-- Provider-rendered preview fixtures are separately labeled PREVIEW FIXTURE.
+- Local preview fixtures are separately labeled PREVIEW FIXTURE; they do not establish provider rendering.
 - Icons: lucide-react. No third-party brand icons or proprietary imagery were copied.
 
 ## Verification completed by UI implementation
@@ -82,4 +82,4 @@ Authentication email delivery, funded provider output, Mongo/R2 retention, signe
 
 ## October 17 delivered controls
 
-History has prompt/model search, status filtering, list/grid/density views and previous/next details. Failed bulk operations remain selected for retry. Image prompt starters and video help cards act on the real composer. Original concept artwork and self-hosted OFL fonts are documented in asset-provenance.md.
+History has prompt/model search, status filtering, list/grid/density views and previous/next details. Failed bulk operations remain selected for retry. Search clears prior selections, and bulk operations act only on visible selected records. Canceled project moves reopen with the saved destination. Image prompt starters and video help cards act on the real composer. Original concept artwork and self-hosted OFL fonts are documented in asset-provenance.md.
