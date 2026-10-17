@@ -43,6 +43,35 @@ interface Receipt {
 function object(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
+export function estimateUsd(value: unknown): number {
+  const estimate = object(value);
+  let usd = estimate.usd;
+  if (!Object.hasOwn(estimate, "usd") && estimate.type === "description") {
+    // The live model endpoint returns this tariff instead of the billing docs'
+    // numeric USD field. Fail closed if its formula or our fixed input changes.
+    const description = typeof estimate.pricing_description === "string" ? estimate.pricing_description.trim().replace(/\s+/g, " ") : "";
+    const tariff = /^For 16:9 video without video input, your request costs roughly \$\d+(?:\.\d+)? per second of generated video at 480p, \$(\d+(?:\.\d+)?) at 720p, and \$\d+(?:\.\d+)? at 1080p\. Each 1,000 video tokens costs \$(\d+(?:\.\d+)?) at 480p or 720p and \$\d+(?:\.\d+)? at 1080p\. Billable video tokens = ceil\(output height × output width × \(input video duration \+ generated video duration\) × 24 \/ 1024\)\. Image and audio references do not count as video input\. Actual pricing depends on output dimensions and billable duration\. Rates shown are before any applicable customer discount\.$/.exec(description);
+    if (!tariff || INPUT.duration !== 5 || INPUT.resolution !== "720p" || INPUT.aspect_ratio !== "16:9" || Object.keys(INPUT).length !== 4) {
+      throw new ExampleError("INVALID_ESTIMATE", "The live price formula is unrecognized. No generation was submitted.");
+    }
+    const tokens = Math.ceil(720 * 1280 * INPUT.duration * 24 / 1024);
+    // Use the higher of the two quoted rates, before discounts, rounded UP to
+    // a cent. This is a conservative estimate, not a claim of the final charge.
+    usd = Math.ceil(Math.max(tokens / 1000 * Number(tariff[2]), INPUT.duration * Number(tariff[1])) * 100) / 100;
+  }
+  if (!(typeof usd === "number" || (typeof usd === "string" && /^\d+(\.\d+)?$/.test(usd)))) {
+    throw new ExampleError("INVALID_ESTIMATE", "Higgsfield did not return a valid USD estimate.");
+  }
+  const amount = Number(usd);
+  if (!Number.isFinite(amount) || amount < 0) throw new ExampleError("INVALID_ESTIMATE", "Higgsfield did not return a valid USD estimate.");
+  return amount;
+}
+function providerErrorCode(error: unknown): string {
+  if (error instanceof ExampleError) return error.code;
+  const status = object(error).statusCode;
+  return typeof status === "number" && Number.isInteger(status) && status >= 400 && status <= 599
+    ? `PROVIDER_HTTP_${status}` : "PROVIDER_OR_NETWORK_ERROR";
+}
 export function publicVideoUrl(value: unknown): string {
   try {
     if (typeof value !== "string") throw new Error();
@@ -121,7 +150,7 @@ export async function generateOnce(api: Api, directory: string, maxUsd: number,
     const response = await api.subscribe(receipt.idempotencyKey);
     return await finish(api, directory, receipt, response, options);
   } catch (error) {
-    receipt.errorCode = error instanceof ExampleError ? error.code : "PROVIDER_OR_NETWORK_ERROR";
+    receipt.errorCode = providerErrorCode(error);
     await persist(directory, receipt);
     throw error;
   }
@@ -169,11 +198,7 @@ function createApi(credentials: string): Api {
   }
   return {
     async estimate() {
-      const value = object(await jsonRequest("/estimate/" + MODEL, "POST", INPUT)).usd;
-      if (!(typeof value === "number" || (typeof value === "string" && /^\d+(\.\d+)?$/.test(value)))) throw new ExampleError("INVALID_ESTIMATE", "Higgsfield did not return a valid USD estimate.");
-      const usd = Number(value);
-      if (!Number.isFinite(usd) || usd < 0) throw new ExampleError("INVALID_ESTIMATE", "Higgsfield did not return a valid USD estimate.");
-      return usd;
+      return estimateUsd(await jsonRequest("/estimate/" + MODEL, "POST", INPUT));
     },
     async subscribe(idempotencyKey) {
       const higgsfield = createHiggsfieldClient({ credentials, baseURL: API_ORIGIN, maxRetries: 0, timeout: 30_000,
@@ -197,6 +222,11 @@ export function safeError(error: unknown): string {
   // SDK/Axios errors may contain authorization headers. Never log the error/stack/body.
   const name = object(error).name;
   const known: Record<string, string> = { AuthenticationError: "Higgsfield rejected the credential.", NotEnoughCreditsError: "The account needs credits or model access. No top-up was attempted.", ValidationError: "Higgsfield rejected the input.", BadInputError: "Higgsfield rejected the input.", TimeoutError: "The request timed out; use --resume if a request ID was saved." };
+  // SDK 0.2.6 names its NotEnoughCreditsError "AccountError". Preserve only
+  // a validated HTTP status, never its raw message, response data, or headers.
+  if (name === "AccountError" && object(error).statusCode === 403) return "HIGGSFIELD_ACCOUNT_REJECTED: Higgsfield rejected the account or available API balance (HTTP 403). No top-up was attempted.";
+  const code = providerErrorCode(error);
+  if (code.startsWith("PROVIDER_HTTP_")) return `${code}: Higgsfield returned an HTTP error. Check the existing attempt before any further submission.`;
   return typeof name === "string" && Object.hasOwn(known, name) ? known[name] : "PROVIDER_OR_NETWORK_ERROR: Outcome may be unknown. Use --resume or reconcile the saved attempt in Higgsfield Requests; never submit again automatically.";
 }
 async function main() {

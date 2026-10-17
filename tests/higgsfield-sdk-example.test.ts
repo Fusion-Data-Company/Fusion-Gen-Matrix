@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import path from "node:path";
-import { ExampleError, INPUT, MODEL, generateOnce, normalize, publicVideoUrl, resume, safeError, verifyVideo, type Api } from "../examples/higgsfield/index";
+import { ExampleError, INPUT, MODEL, estimateUsd, generateOnce, normalize, publicVideoUrl, resume, safeError, verifyVideo, type Api } from "../examples/higgsfield/index";
+const pricingDescription = "For 16:9 video without video input, your request costs roughly $0.2056 per second of generated video at 480p, $0.4622 at 720p, and $1.1372 at 1080p. Each 1,000 video tokens costs $0.0214 at 480p or 720p and $0.0234 at 1080p. Billable video tokens = ceil(output height × output width × (input video duration + generated video duration) × 24 / 1024). Image and audio references do not count as video input. Actual pricing depends on output dimensions and billable duration. Rates shown are before any applicable customer discount.";
 
 let directory: string;
 let api: Api;
@@ -14,6 +15,30 @@ beforeEach(async () => {
   api = { estimate: vi.fn().mockResolvedValue(2.31), subscribe: vi.fn().mockResolvedValue(completed), status: vi.fn().mockResolvedValue(completed), verify: vi.fn().mockResolvedValue(undefined) };
 });
 afterEach(async () => { vi.unstubAllGlobals(); await rm(directory, { recursive: true, force: true }); });
+
+describe("authenticated price formats", () => {
+  it("accepts documented numeric USD estimates", () => {
+    expect(estimateUsd({ usd: "2.3112", credits: "36.9792" })).toBe(2.3112);
+    expect(estimateUsd({ usd: 2.31 })).toBe(2.31);
+  });
+  it("uses the live token tariff before discounts and rounds up to a cent", () => {
+    expect(estimateUsd({ type: "description", pricing_description: pricingDescription })).toBe(2.32);
+    expect(estimateUsd({ type: "description", pricing_description: pricingDescription.replace("$0.4622 at 720p", "$0.6000 at 720p") })).toBe(3);
+  });
+  it("rejects changed formulas and invalid numeric estimates", () => {
+    for (const value of [undefined, {}, { usd: null }, { usd: -1 }, { usd: Infinity }, { usd: "invalid" },
+      { type: "description", pricing_description: pricingDescription.replace("/ 1024", "/ 512") },
+      { type: "description", pricing_description: pricingDescription + " Plus another fee." },
+      { usd: null, type: "description", pricing_description: pricingDescription }]) {
+      expect(() => estimateUsd(value)).toThrow(ExampleError);
+    }
+  });
+  it("blocks submission if the live token rate rises beyond the approved budget", async () => {
+    vi.mocked(api.estimate).mockResolvedValue(estimateUsd({ type: "description", pricing_description: pricingDescription.replace("$0.0214", "$0.0300") }));
+    await expect(generateOnce(api, directory, 2.5)).rejects.toMatchObject({ code: "PRICE_LIMIT" });
+    expect(api.subscribe).not.toHaveBeenCalled();
+  });
+});
 
 describe("one billable SDK attempt", () => {
   it("submits the requested model/input once and refuses later generation attempts", async () => {
@@ -51,6 +76,20 @@ describe("one billable SDK attempt", () => {
     expect(receipt).not.toContain(privateFixture);
     expect(receipt).toContain("PROVIDER_OR_NETWORK_ERROR");
     expect(safeError(new Error(privateFixture))).not.toContain(privateFixture);
+  });
+
+  it.each([["AccountError", 403], ["APIError", 429]])("records safe HTTP evidence for %s without retaining credential-bearing SDK data", async (name, statusCode) => {
+    const sensitiveFixture = "never-print-this-fake-authorization-header";
+    const error = { name, statusCode, message: sensitiveFixture, responseData: { authorization: sensitiveFixture } };
+    vi.mocked(api.subscribe).mockRejectedValue(error);
+    await expect(generateOnce(api, directory, 2.5)).rejects.toBe(error);
+    const receipt = await readFile(path.join(directory, "seedance-attempt.json"), "utf8");
+    expect(receipt).toContain(`PROVIDER_HTTP_${statusCode}`);
+    expect(receipt).not.toContain(sensitiveFixture);
+    expect(safeError(error)).toContain(String(statusCode));
+    expect(safeError(error)).not.toContain(sensitiveFixture);
+    await expect(generateOnce(api, directory, 2.5)).rejects.toMatchObject({ code: "ATTEMPT_EXISTS" });
+    expect(api.subscribe).toHaveBeenCalledTimes(1);
   });
 
   it.each(["failed", "canceled", "nsfw", "moderated"])("handles terminal %s without output verification or a second job", async status => {

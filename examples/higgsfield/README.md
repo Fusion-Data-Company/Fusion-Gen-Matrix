@@ -27,6 +27,8 @@ pnpm hf:seedance --estimate
 
 The first command checks only local format and file permissions. The second calls the non-generating estimate endpoint with the exact input. Neither generates a video. Account access is verified only by a successful authenticated response.
 
+The live Seedance endpoint currently returns `type: "description"` with a tariff rather than the billing documentation's numeric `usd`. The parser accepts only the observed complete formula, for this fixed 720p/16:9/five-second input: 1280 × 720 pixels and 24 billable frames per second give 108,000 video tokens. At the authenticated rate of $0.0214 per 1,000 tokens, that is $2.3112 before discounts. The guard uses the higher of the token and per-second estimates and rounds up to **$2.32**. Changed formulas are rejected; rate increases still pass through the spending ceiling. This estimate is not a final-charge claim.
+
 On October 17, 2026, the official model page lists roughly **$0.4622/second at 720p and 16:9**, approximately **$2.311 for five seconds before customer discounts**. Actual price depends on output dimensions and billable duration. The authenticated estimate is authoritative; the public starting price for 480p is not this job's price. Obtain a spending ceiling for this one job (suggested $2.50 if its fresh estimate fits). No credit purchase or top-up is authorized by this example.
 
 Only after local entry and approval of that ceiling:
