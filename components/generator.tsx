@@ -79,7 +79,22 @@ export function GeneratorPage({surface}:{surface:Surface}) {
   const rest=remaining.toString();
   if(rest!==search)router.replace("/"+surface+(rest?"?"+rest:"")+window.location.hash,{scroll:false});
  },[models,data?.presets,query,router,surface,update,draft.modelId,draft.settings,draft.media]);
- useEffect(()=>{if(!data?.user)return;void api<{items:Project[]}>("/api/projects").then(result=>setProjects(result.items)).catch(e=>setError(messageOf(e)));},[data?.user]);
+ useEffect(()=>{
+  if(!data?.user)return;
+  let active=true;
+  const ownerId=data.user.id;
+  void api<{items:Project[]}>("/api/projects").then(result=>{
+   const current=useDock.getState();
+   if(!active||current.ownerId!==ownerId)return;
+   setProjects(result.items);
+   const selectedProject=current.drafts[surface].projectId;
+   if(selectedProject&&!result.items.some(project=>project.id===selectedProject)){
+    update(surface,{projectId:undefined});
+    notice("The selected project is no longer available. This draft will save to your library.");
+   }
+  }).catch(e=>{if(active)setError(messageOf(e));});
+  return()=>{active=false;};
+ },[data?.user,surface,update,notice]);
  const quotePayload=JSON.stringify({modelId:model?.id,prompt:draft.prompt,settings:draft.settings,media:draft.media.map(item=>({id:item.id,role:item.role}))});
  const quote=quoteState?.payload===quotePayload?quoteState.value:null;
  const quoteUserId=data?.user?.id;

@@ -4,6 +4,16 @@ Latest checkpoint: 2026-10-17 (UTC). The original full-suite checkpoint below is
 
 The release is published as a [read-only showcase](https://fusion-gen-matrix.vercel.app). Interactive preview workflows use labeled sample media on a loopback-only local server.
 
+## 2026-10-17 deleted-project recovery
+
+A saved draft pointing at a deleted project could no longer generate: when the last project was deleted, the destination selector disappeared, but the stale project ID stayed in the request and produced “This item is unavailable.” The composer now removes that association only after a successful owned-project list confirms it is missing, then tells the user that the draft will save to the main library. Prompt, model, settings and references are not reset. Abandoned requests and responses for a different draft owner are ignored. No visual styles or provider/billing code changed.
+
+- Reproduced the failure in a separate loopback production-build preview using a disposable project. The rejected attempt left the preview balance at 200 and created no result.
+- After the fix, the same persisted draft showed the recovery notice and retained its prompt/model. One local sample queued, completed and appeared in the main library with no project association, one output and one four-credit preview debit (balance 196). No paid provider call was made.
+- Creating and selecting a valid destination, then reloading, retained that project and the original prompt. The existing completed sample remained visible.
+- Eight focused state/persistence tests, targeted generator ESLint, Node.js 22 production build/TypeScript and the generated-client secret scan (72 files) passed. The older comprehensive suite was not rerun for this scoped change.
+- These checks establish local preview recovery, not real provider, database, email, storage or billing acceptance. The published app remains a read-only showcase.
+
 ## 2026-10-17 draft entry-link follow-up
 
 A model-link entry left its model parameter in the URL. Changing from Soul 2 to Recraft V4.1, selecting 16:9/PNG, then reloading restored Soul 2 and its defaults. Model, preset and prompt parameters are now consumed after one valid prefill, so subsequent reload/sign-in/navigation restores the edited draft. Unrelated query parameters and the hash remain intact. Invalid model or wrong-surface effect links preserve the current valid draft. The interface styling is unchanged.
