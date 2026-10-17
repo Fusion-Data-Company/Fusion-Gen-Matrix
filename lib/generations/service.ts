@@ -6,6 +6,7 @@ import {AppError,notFound} from "../errors";
 import {getEnv} from "../env";
 import {getPlan} from "../billing/plans";
 import {debit,refund} from "../billing/ledger";
+import {getModel} from "../catalog";
 import {validateInput} from "../catalog/server";
 import type {ValidatedInput} from "../catalog/types";
 import {HiggsfieldClient,HiggsfieldError} from "../higgsfield/client";
@@ -53,14 +54,16 @@ export class GenerationService{
     if(upload&&upload.userId===userId&&upload.status!=="pending"){
      if(!upload.r2Key)throw new AppError("MEDIA_UNAVAILABLE","This attachment needs to be uploaded again.");
      const url=this.options.mode==="demo"?"https://preview.invalid/"+encodeURIComponent(item.id):await this.options.mediaUrl({r2Key:upload.r2Key,contentType:upload.contentType,providerUrl:upload.providerUrl});
-     media.push({id:upload.id,url:upload.url,kind:upload.kind,role:item.role,contentType:upload.contentType,bytes:upload.bytes});
+     media.push({id:upload.id,url:upload.url,kind:upload.kind,role:item.role,contentType:upload.contentType,bytes:upload.bytes,width:upload.width,height:upload.height,durationSec:upload.durationSec});
      providerMedia.push({...media.at(-1)!,url});continue;
     }
     const g=await tx.get("generations",item.id);
     if(!g||g.deletedAt||g.userId!==userId||g.status!=="completed"||!g.outputs.length)notFound();
-    const output=g.outputs[0];
+    const expectedKind=getModel(input.modelId)?.roles.find(role=>role.role===item.role)?.kind;
+    const output=g.outputs.find(output=>output.kind===expectedKind);
+    if(!output||output.kind==="artifact")throw new AppError("UNSUPPORTED_REFERENCE","Downloadable files cannot be used as image, video, or audio references.",400);
     const url=this.options.mode==="demo"?"https://preview.invalid/"+encodeURIComponent(item.id):await this.options.mediaUrl({r2Key:output.r2Key,contentType:output.contentType});
-    media.push({id:g.id,url:output.url,kind:output.kind,role:item.role,contentType:output.contentType});
+    media.push({id:g.id,url:output.url,kind:output.kind,role:item.role,contentType:output.contentType,width:output.width,height:output.height,durationSec:output.durationSec});
     providerMedia.push({...media.at(-1)!,url});
    }
   });

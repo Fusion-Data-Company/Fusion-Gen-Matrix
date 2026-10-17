@@ -1,18 +1,37 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
-import {ArrowUpRight,ArrowRight,Globe,ImageIcon} from "lucide-react";
+import {ArrowUpRight,ArrowRight,ImageIcon,Film,Layers,FolderOpen,Globe,Sparkles} from "lucide-react";
 import {useStudio} from "./studio-context";
 import {GenerationGallery} from "./generations";
-import {EmptyState,Spinner} from "./ui";
+import {Spinner} from "./ui";
+import {ConceptArt,ConceptLabel} from "./concept-art";
+
 export function ExplorePage() {
  const {data,loading,reload}=useStudio();
  if(loading)return <Spinner label="Opening Fusion Gen Matrix"/>;
- const featured=[data?.models.find(model=>model.surface==="image"),data?.models.find(model=>model.surface==="video"),data?.models.find(model=>model.surface==="image"&&model.roles.length>0)].filter(model=>!!model);
- return <section className="page-wrap"><div className="explore-topline"><span className="mono">THE FUSION CREATIVE WORKSPACE</span><span className="mono">IDEA → ITERATION → ASSET</span></div><div className="hero"><div className="hero-copy"><div className="eyebrow">A LITTLE DIRECTION. A NEW POSSIBILITY.</div><h1>MAKE SPACE<br/>FOR YOUR<br/><span>NEXT IDEA.</span></h1><p>Images, motion and the process behind them. A focused studio for turning a creative brief into work worth keeping.</p><div className="row"><Link className="button primary" href="/image">Create an image<ArrowUpRight size={17}/></Link><Link className="button ghost" href="/video">Explore video<ArrowRight size={16}/></Link></div></div><div className="hero-art"><Image src="/art/still-life.svg" alt="Original Fusion product form illustration, a sculptural metallic vessel and lime sphere on a plinth" fill unoptimized priority sizes="(max-width: 760px) 100vw, 650px"/><div className="art-caption"><span className="tag">FORM / LIGHT / MATERIAL</span><span className="tag">ILLUSTRATIVE STUDY</span></div></div></div>
- <div className="section-heading"><div><h2>Find your starting point.</h2><p>A verified model for the direction you have in mind.</p></div><Link href="/image">Open studio<ArrowUpRight size={14}/></Link></div><div className="section-grid">{featured.map((model,index)=>model&&<Link className="feature-card" href={"/"+model.surface+"?model="+encodeURIComponent(model.id)} key={model.id}><div className="feature-art"><Image src={["/art/architecture.svg","/art/motion-study.svg","/art/still-life.svg"][index]} alt={"Original illustrative "+model.surface+" study"} fill unoptimized sizes="(max-width: 760px) 100vw, 400px"/><span className="media-label">ILLUSTRATION · {model.surface.toUpperCase()}</span></div><div className="feature-info"><div><div className="eyebrow" style={{fontSize:8,marginBottom:7}}>{model.provider}</div><h3>{model.label}</h3><p>{model.description}</p></div><ArrowUpRight size={18}/></div></Link>)}</div>
- <div className="workflow-strip"><div><span className="step-number">01</span><div><h3>Your brief, in focus</h3><p>Choose a model and build from text or a reference.</p></div></div><div><span className="step-number">02</span><div><h3>Every iteration, connected</h3><p>Keep the prompt and settings with the finished asset.</p></div></div><div><span className="step-number">03</span><div><h3>A home for the work</h3><p>Organize by project, download, or share deliberately.</p></div></div></div>
- <div className="section-heading"><div><h2>A creative head start.</h2><p>Reusable directions for product, brand and motion.</p></div><Link href="/effects">All effects<ArrowUpRight size={14}/></Link></div><div className="section-grid">{data?.presets.slice(0,3).map(preset=><Link className="feature-card" href={"/effects/"+preset.slug} key={preset.id}><div className="feature-art"><Image src={preset.coverUrl} fill unoptimized alt={"Illustration for "+preset.title} sizes="(max-width: 760px) 100vw, 400px"/><span className="media-label">ILLUSTRATIVE PRESET COVER</span></div><div className="feature-info"><div><h3>{preset.title}</h3><p>{preset.description}</p></div><ArrowUpRight size={18}/></div></Link>)}</div>
- <div className="section-heading"><div><h2>Made in the studio.</h2><p>Work that creators have chosen to publish.</p></div><Link href="/community">Community<ArrowUpRight size={14}/></Link></div>{data?.community.length?<GenerationGallery items={data.community.slice(0,6)} publicView onChange={reload}/>:<EmptyState icon={<Globe size={25}/>} title="The next perspective could be yours." description="Community begins with work you choose to share. Your generations stay private until you publish them." action={<Link className="button" href="/image">Create your first image<ImageIcon size={16}/></Link>}/>}
+ const image=data?.models.find(model=>model.surface==="image"),video=data?.models.find(model=>model.surface==="video");
+ const studio=(surface:string,id?:string)=>"/"+surface+(id?"?model="+encodeURIComponent(id):"");
+ const stories=[
+  {title:"A FRAME THAT FEELS LIKE YOU",detail:"Shape the light. Find the character. Make the image.",href:studio("image",image?.id),scene:0,tag:"IMAGE STUDIO",action:"Create image"},
+  {title:"GIVE YOUR WORLD MOTION",detail:"From a single frame to a cinematic sequence.",href:studio("video",video?.id),scene:1,tag:"VIDEO STUDIO",action:"Create video"},
+  {title:"A DIFFERENT DIRECTION",detail:"Explore ready-to-use product and motion recipes.",href:"/effects",scene:3,tag:"CREATIVE EFFECTS",action:"Explore effects"},
+ ];
+ const tools=[
+  {name:image?.family??"Image studio",description:"Portraits, products and visual ideas",href:studio("image",image?.id),Icon:ImageIcon,label:"IMAGE"},
+  {name:video?.family??"Video studio",description:"Create motion from text and references",href:studio("video",video?.id),Icon:Film,label:"VIDEO"},
+  {name:"Creative effects",description:"Start with a reusable creative direction",href:"/effects",Icon:Sparkles,label:"RECIPES"},
+  {name:"Your library",description:"Every output, prompt and source together",href:"/assets",Icon:FolderOpen,label:"WORKSPACE"},
+  {name:"Projects",description:"Organize your work by campaign",href:"/assets",Icon:Layers,label:"ORGANIZE"},
+  {name:"Community",description:"Explore work creators chose to share",href:"/community",Icon:Globe,label:"DISCOVER"},
+ ];
+ return <section className="explore-page">
+  <h1 className="sr-only">Fusion Gen Matrix creative studio</h1>
+  <div className="discovery-rail" aria-label="Featured creative tools">{stories.map(story=><Link className="discovery-story" href={story.href} key={story.title}><div className="story-media"><ConceptArt scene={story.scene} priority/><div className="story-shade"/><span className="story-tag">{story.tag}</span><div className="story-overlay"><h2>{story.title}</h2><span className="story-action">{story.action}<ArrowUpRight size={17}/></span></div><ConceptLabel/></div><p>{story.detail}</p></Link>)}</div>
+  <div className="discovery-workspace"><Link className="workspace-feature" href="/image"><ConceptArt scene={2}/><div className="story-shade"/><div><span className="eyebrow">FUSION GEN MATRIX</span><h2>ONE STUDIO.<br/><em>EVERY ITERATION.</em></h2><p>Images, motion, references and the process behind them.</p><span className="button primary">Open image studio<ArrowUpRight size={16}/></span></div><ConceptLabel/></Link><div className="tool-grid">{tools.map(({name,description,href,Icon,label})=><Link className="tool-card" href={href} key={name}><div className="tool-card-top"><Icon size={23}/><span>{label}</span></div><h3>{name}</h3><p>{description}</p></Link>)}</div></div>
+  <div className="section-heading"><div><h2>EXPLORE CREATIVE EFFECTS</h2><p>Choose a direction, add your subject, then make it your own.</p></div><Link href="/effects">View all<ArrowRight size={16}/></Link></div>
+  <div className="effect-rail">{data?.presets.map((preset,index)=><Link className="effect-poster" href={"/effects/"+preset.slug} key={preset.id}><ConceptArt scene={index}/><div className="story-shade"/><span className="effect-category">{preset.category}</span><div className="effect-poster-copy"><h3>{preset.title}</h3><p>{preset.surface} recipe<ArrowUpRight size={16}/></p></div><ConceptLabel/></Link>)}</div>
+  <div className="section-heading"><div><h2>FROM THE COMMUNITY</h2><p>Published work with the prompt and settings behind it.</p></div><Link href="/community">Explore community<ArrowRight size={16}/></Link></div>
+  {data?.community.length?<GenerationGallery items={data.community.slice(0,9)} publicView onChange={reload}/>:<div className="community-start"><Globe size={25}/><div><h3>Your work stays private until you share it.</h3><p>Create an image, keep the iterations you love, and publish from your library.</p></div><Link className="button" href="/image">Start creating<ArrowUpRight size={15}/></Link></div>}
+  <p className="art-disclosure">Preview artwork was created for Fusion. It demonstrates creative direction, not output from the selected model.</p>
  </section>;
 }

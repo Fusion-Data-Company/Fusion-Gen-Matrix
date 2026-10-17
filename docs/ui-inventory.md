@@ -8,7 +8,7 @@ Public source inspection on 2026-10-15:
 - https://higgsfield.ai/ai/video — public navigation was returned; generator internals are client-rendered.
 - https://higgsfield.ai/pricing — public navigation was returned; interactive pricing contents were not available through the public text fetch.
 
-Therefore the studio layout and interaction specification are grounded in the supplied creator brief, not a claim of screenshot-perfect parity with inaccessible client-rendered source views. Root verification owns live browser screenshots and final evidence in docs/evidence. No side-by-side screenshot or Lighthouse score is asserted by this implementation inventory.
+A fresh October 17 rendered inspection obtained public Explore, image and video layouts. The second pass adopts their media-led hierarchy, floating image composer and compact video panel in an original Fusion implementation. Before/after evidence is retained with the task. See decisions.md for exact references and intentional differences. No pixel-perfect parity or Lighthouse score is asserted.
 
 ## Shared interface
 - One shell: Fusion Gen Matrix monogram/wordmark, seven navigation destinations, balance, account menu, mobile navigation dialog, footer.
@@ -40,9 +40,9 @@ Therefore the studio layout and interaction specification are grounded in the su
 - Input controls are derived from verified model definitions; client submits model ID, scalar settings and owned media IDs only.
 - Optional advanced structured settings accept JSON text and are validated on the server.
 - Quotes run only for signed-in interactive sessions. A new input payload invalidates the old displayed quote. Live submits include maxCredits from the displayed quote.
-- Generate creates a UUID per submission intent, retaining the key and exact request across ambiguous network/5xx retries. A confirmed response or changed request ends that intent. Inputs remain in the zustand dock across navigation and sign-in.
+- Generate creates a UUID per submission intent, retaining the key and exact request across ambiguous network/5xx retries. A confirmed response or changed request ends that intent. Inputs persist on the same device for 24 hours across navigation, reload and sign-in; sign-out/account changes clear private drafts. Cross-tab updates synchronize.
 - Queued/running, completed, failed, content-filtered and canceled records stay visible.
-- Status polling uses the database-only status endpoint every 3.5 seconds. Refresh is an explicit action.
+- Status polling uses the database-only status endpoint every 3.5 seconds while visible, batches 50 active IDs, avoids overlapping calls and ignores stale/regressive updates. Refresh is an explicit action.
 - Complete detail provides download(s), prompt copy, reuse, image-to-video reference, publish/unpublish, move and delete where permitted.
 - Content-filter and failure messages come from the server; the UI does not invent refund success.
 - Public records omit costs and private reference inputs. Cost is shown only when the server provides it.
@@ -79,3 +79,7 @@ Therefore the studio layout and interaction specification are grounded in the su
 
 ## Remaining live dependencies
 Authentication email delivery, funded provider output, Mongo/R2 retention, signed upload CORS, finalized prices, Stripe checkout/portal/receipts, and approved legal text require configured services and action-time live verification. The public showcase and local preview make those limits explicit.
+
+## October 17 delivered controls
+
+History has prompt/model search, status filtering, list/grid/density views and previous/next details. Failed bulk operations remain selected for retry. Image prompt starters and video help cards act on the real composer. Original concept artwork and self-hosted OFL fonts are documented in asset-provenance.md.

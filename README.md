@@ -63,7 +63,7 @@ APP_MODE=showcase pnpm start
 
 The source snapshot verified on **2026-10-15 contains 85 generation endpoints: 18 image and 67 video**. This means their public request contracts were verified, not that all endpoints were successfully used with this account. No standalone audio-generation REST endpoint was verified. The audio page explains that limit; documented video audio settings and audio reference inputs remain available where a model supports them. See [coverage, exclusions and sources](docs/model-catalog.md).
 
-Non-media artifacts such as ZIP, JSX, FBX and PLY are not retained as playable assets. Models returning unsupported artifacts require further retention work. The catalog is not a promise that every possible output format has completed an end-to-end live test.
+ZIP, JSX, FBX and PLY results are retained as validated, opaque attachment downloads (50 MiB maximum). They are never executed, unpacked or presented as playable media. Uploaded media dimensions and duration are measured server-side before use. The catalog is not a promise that every possible output format has completed an end-to-end live test.
 
 ## Live configuration
 
@@ -126,10 +126,14 @@ A passing build or test suite does not establish live email delivery, funded gen
 | `lib/auth/`, `auth.ts` | Identity, session and authorization boundaries |
 | `lib/storage/`, `lib/upload-origins.ts` | Private retention, bounded transfers and direct-upload origin policy |
 
-When adding a model, update the metadata, schema, media mapping and documented examples together. Preserve the exact official source link, add meaningful validation/mapping tests, and verify live access separately. Never treat a connector job-set name or a promotional price as a verified REST contract.
+Run `pnpm models` to regenerate the typed catalog and `pnpm models:check` to verify it is current. When adding a model, review official documentation and update the metadata, schema, media mapping and documented examples together. Preserve the exact official source link, add meaningful validation/mapping tests, and verify live access separately. Never treat a connector job-set name or a promotional price as a verified REST contract.
 
 Useful references: [provider contract](docs/provider-contract.md), [storage contract](docs/storage.md), [frontend API contract](docs/frontend-contract.md), [interface inventory](docs/ui-inventory.md), and [launch runbook](docs/launch-runbook.md).
 
 ## Provenance
 
 This is original application code built from the requested workflow and [Albert Olgaard's linked creator specification](https://docs.google.com/document/d/1EHo5qNubl2eso078n1XwmvPHNETfsc84HMN9j9sw7Sg/edit?usp=sharing), referenced in [“Dear Higgsfield, I cloned you in 1 hour”](https://www.youtube.com/watch?v=hRr-yUSM0_A). No unlicensed Higgsfield app-template code, gated creator repository, proprietary branding or marketing assets were copied. Illustrations and preview fixtures are explicitly labeled. Third-party dependencies retain their own licenses.
+
+## October 17 fidelity pass
+
+The interface now includes a cinematic Explore rail, floating image composer, compact video panel, responsive navigation, searchable status-filtered history, grid/list views, draft recovery and cross-tab synchronization. See [design decisions](docs/decisions.md), [asset provenance](docs/asset-provenance.md) and [verification](docs/verification.md).

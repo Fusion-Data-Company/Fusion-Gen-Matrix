@@ -1,4 +1,6 @@
 import "server-only";
+import {inspectMedia} from "./metadata";
+import {inspectArtifact,ARTIFACT_LIMIT} from "./artifacts";
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -35,10 +37,10 @@ export class MediaService {
   if(file.size>MEDIA_LIMITS[claimed.kind])throw new AppError("MEDIA_TOO_LARGE",`The ${claimed.kind} file exceeds the ${MEDIA_LIMITS[claimed.kind]/1024/1024} MiB limit.`,413);
   const bytes=new Uint8Array(await file.arrayBuffer());
   if(bytes.byteLength!==file.size)throw new AppError("INVALID_UPLOAD","The upload size changed while it was read.",400);
-  const format=sniffMedia(bytes,file.type);
+  const format=sniffMedia(bytes,file.type),metadata=await inspectMedia(bytes,format.kind);
   const id=assertIdentifier(this.newId()),key=`u/${userId}/uploads/${id}.${format.extension}`;
   await this.options.store.put(key,bytes,format.contentType);
-  return {id,userId,kind:format.kind,name:sanitizeMediaName(file.name),url:mediaUrl(key),r2Key:key,contentType:format.contentType,bytes:bytes.byteLength,createdAt:this.now().toISOString()};
+  return {id,userId,...metadata,kind:format.kind,name:sanitizeMediaName(file.name),url:mediaUrl(key),r2Key:key,contentType:format.contentType,bytes:bytes.byteLength,createdAt:this.now().toISOString()};
  }
  async prepareDirectUpload(userId:string,value:DirectUploadInput):Promise<PreparedDirectUpload>{
   if(this.options.mode!=="live")throw new AppError("DIRECT_UPLOAD_UNAVAILABLE","Direct upload requires the live services.",503);
@@ -70,10 +72,11 @@ export class MediaService {
   if(received.bytes.byteLength!==input.bytes)throw new AppError("UPLOAD_SIZE_MISMATCH","The uploaded file size does not match its metadata. Start a new upload.",400);
   const actual=sniffMedia(received.bytes,received.contentType);
   if(actual.contentType!==input.contentType)throw new AppError("MEDIA_TYPE_MISMATCH","The uploaded file does not match its declared media type.",415);
+  const metadata=await inspectMedia(received.bytes,actual.kind);
   await this.options.store.put(expectedKey,received.bytes,actual.contentType);
   // The browser PUT remains writable until expiry. A ready upload keeps only
   // verified private bytes; a new generation prepares a fresh server upload.
-  return {id:upload.id,userId:upload.userId,kind:actual.kind,name:input.name,url:mediaUrl(expectedKey),r2Key:expectedKey,contentType:actual.contentType,bytes:received.bytes.byteLength,createdAt:upload.createdAt,status:"ready",expiresAt:upload.expiresAt};
+  return {id:upload.id,userId:upload.userId,...metadata,kind:actual.kind,name:input.name,url:mediaUrl(expectedKey),r2Key:expectedKey,contentType:actual.contentType,bytes:received.bytes.byteLength,createdAt:upload.createdAt,status:"ready",expiresAt:upload.expiresAt};
  }
  async getProviderMediaUrl(media:{r2Key:string;contentType:string;providerUrl?:string}):Promise<string>{
   assertMediaKey(media.r2Key);
@@ -94,19 +97,24 @@ export class MediaService {
   assertIdentifier(generation.userId);assertIdentifier(generation.id);
   if(outputs.length===0)throw new AppError("MISSING_PROVIDER_MEDIA","The provider completed without downloadable media.",502);
   if(outputs.length>32)throw new AppError("TOO_MANY_PROVIDER_OUTPUTS","The provider returned more media than this request can retain.",502);
-  if(outputs.some(output=>output.kind==="artifact"))throw new AppError("UNSUPPORTED_PROVIDER_ARTIFACT","This result includes a non-media artifact. Retention is pending until an artifact handler is configured.",502);
   const saved:Output[]=[];
   // Persist every output before the caller transitions the generation to completed.
   // Fixed keys make a partial-retention retry safe; existing private objects are replaced.
   for(let index=0;index<outputs.length;index++){
    const output=outputs[index];
-   if(output.kind==="artifact")throw new AppError("UNSUPPORTED_PROVIDER_ARTIFACT","Unsupported provider output.",502);
+   if(output.kind==="artifact"){
+    const received=await this.transfer(output.url,{maxBytes:ARTIFACT_LIMIT,timeoutMs:120000});
+    const format=inspectArtifact(received.bytes,output.name),key=`u/${generation.userId}/generations/${generation.id}/${index}.${format.extension}`;
+    await this.options.store.put(key,received.bytes,format.contentType);
+    saved.push({kind:"artifact",name:format.extension.toUpperCase()+" file",url:mediaUrl(key),r2Key:key,contentType:format.contentType});continue;
+   }
    const received=await this.transfer(output.url,{maxBytes:MEDIA_LIMITS[output.kind],timeoutMs:120000});
    const format=sniffMedia(received.bytes,received.contentType);
    if(format.kind!==output.kind)throw new AppError("PROVIDER_MEDIA_TYPE_MISMATCH","The provider result has a different media type than expected.",502);
+   const metadata=await inspectMedia(received.bytes,format.kind);
    const key=`u/${generation.userId}/generations/${generation.id}/${index}.${format.extension}`;
    await this.options.store.put(key,received.bytes,format.contentType);
-   saved.push({kind:format.kind,url:mediaUrl(key),r2Key:key,contentType:format.contentType,width:output.width,height:output.height,durationSec:output.durationSec});
+   saved.push({kind:format.kind,url:mediaUrl(key),r2Key:key,contentType:format.contentType,...metadata});
   }
   return saved;
  }

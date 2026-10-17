@@ -1,11 +1,11 @@
-import metadata from "./metadata.json";
+import generatedModels from "./models.generated";
 import type { MediaInput, ModelEntry, PriceQuote, Settings } from "./types";
 
 export * from "./types";
 
 // Generated from official per-model JSON schemas. Source URL is stored on every entry.
 // This module contains no credentials, provider code, AJV, or raw documentation.
-export const models: readonly ModelEntry[] = metadata as unknown as readonly ModelEntry[];
+export const models: readonly ModelEntry[] = generatedModels;
 const byId = new Map(models.map((model) => [model.id, model]));
 export function getModel(id: string): ModelEntry | undefined { return byId.get(id); }
 

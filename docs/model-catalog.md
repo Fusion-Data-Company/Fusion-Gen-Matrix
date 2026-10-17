@@ -155,8 +155,12 @@ The source for Soul ID's distinct workflow is [Create character](https://docs.hi
 
 Review the official console and per-model docs before changing an endpoint, setting or price. Update the corresponding source snapshot, schema, public metadata, media mapping and documented request fixture together. Keep raw documentation and AJV server-only. Run:
 
+    pnpm models
+    pnpm models:check
     node node_modules/vitest/vitest.mjs run tests/catalog.test.ts
     node node_modules/eslint/bin/eslint.js lib/catalog/*.ts lib/higgsfield/*.ts tests/catalog.test.ts
     node node_modules/typescript/bin/tsc --noEmit --pretty false
 
 The provider integration contract, response shapes, ambiguity handling and remaining live tests are in docs/provider-contract.md.
+
+`models.generated.ts` is reproducible from the reviewed metadata JSON and embeds its SHA-256. Generation validates unique IDs, known control types, official source hosts and matching input schemas; it does not automatically trust newly fetched provider content.

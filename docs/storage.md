@@ -48,7 +48,7 @@ Current Higgsfield signed-upload documentation supports JPEG/PNG/WebP/GIF/MP4/WA
 
 Retention allows at most 32 outputs and downloads them sequentially. Each transfer is bounded by the relevant byte limit, a 120-second maximum request timeout and a 5-second DNS resolution timeout. Content-Length is checked when present; received bytes are counted independently. Bytes are buffered within that per-file limit before writing. A deployment must have enough memory and request-body capacity for its selected upload limit and generation concurrency; the app's 200 MiB file cap does not override a hosting platform's smaller upload cap.
 
-Non-media artifacts such as ZIP, JSX, FBX and PLY currently block successful retention. They are not silently discarded. Models requiring such artifacts need a separate artifact retention design before claiming those outputs are supported.
+ZIP, JSX, FBX and PLY provider outputs are validated and retained as opaque files, capped at 50 MiB. The media route uses Content-Disposition: attachment, sandbox CSP and nosniff. Files are never executed or unpacked; invalid artifacts leave the entire result pending retention rather than silently dropping outputs.
 
 ## Network boundary
 
@@ -77,3 +77,7 @@ The local and mocked tests make no paid generation calls and create no credentia
 Sources verified 2026-10-15:
 - [Higgsfield file uploads](https://docs.higgsfield.ai/docs/concepts/file-uploads.md), also retained in the local research archive.
 - [Cloudflare R2 S3 API compatibility](https://developers.cloudflare.com/r2/api/s3/api/).
+
+## Measured metadata
+
+`metadata.ts` reads dimensions from Sharp and duration/video geometry from Mediabunny using retained bytes. Both server and direct-upload completion persist those values; retained provider outputs use measured values instead of provider hints. Source resolution forwards those fields to model validation. Missing/corrupt tracks or dimensions reject the file before a ready record is created. Legacy media records without measurements should be re-uploaded. Tests: `tests/media-metadata.test.ts`.

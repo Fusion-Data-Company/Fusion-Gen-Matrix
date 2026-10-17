@@ -1,3 +1,4 @@
+import {artifactDisposition} from "@/lib/storage/artifacts";
 import {getEnv} from "@/lib/env";
 import {api} from "@/lib/http";
 import {currentUser} from "@/lib/auth/server";
@@ -20,7 +21,7 @@ export async function GET(request:Request,context:Context){return api(async()=>{
  });
  if(!allowed)notFound();
  const media=await readMedia(key,request.headers.get("range")??undefined);
- const headers:Record<string,string>={"Content-Type":media.contentType,"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff","Accept-Ranges":"bytes","Content-Security-Policy":"default-src 'none'; sandbox","Content-Disposition":"inline"};
+ const headers:Record<string,string>={"Content-Type":media.contentType,"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff","Accept-Ranges":"bytes","Content-Security-Policy":"default-src 'none'; sandbox","Content-Disposition":artifactDisposition(key)};
  if(media.contentLength!==undefined)headers["Content-Length"]=String(media.contentLength);
  if(media.contentRange)headers["Content-Range"]=media.contentRange;
  return new Response(media.body as BodyInit,{status:media.status,headers});

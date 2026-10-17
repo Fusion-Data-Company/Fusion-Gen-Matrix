@@ -4,6 +4,19 @@ Latest checkpoint: 2026-10-17 (UTC). The original full-suite checkpoint below is
 
 The release is published as a [read-only showcase](https://fusion-gen-matrix.vercel.app). Interactive preview workflows use labeled sample media on a loopback-only local server.
 
+## 2026-10-17 studio fidelity pass
+
+The cinematic Explore rail, floating image composer, video side panel, mobile shortcuts and original concept artwork were compared against fresh public reference captures. Reference images were not bundled in the application. Before/after captures and deployment details are retained locally in the release evidence.
+
+- Node.js 22: 206 tests passed across nine files; full ESLint, typed catalog drift check, TypeScript/production build and generated-client secret scan passed. The 85-model catalog is generated from the reviewed metadata snapshot.
+- Browser preview: a draft survived sign-in and reload; a sample generation completed; a second queued generation was canceled and refunded exactly once. Search, status filtering, list mode, model families, motion-control required references, detail navigation, account links and mobile navigation were exercised. The isolated history contained 504 local fixtures/results, not paid generations.
+- Responsive inspection: desktop at 1440px and phone at 390px. The phone page had no horizontal overflow and the primary action stayed visible. Original images loaded. Settings wrap instead of overlapping. The gallery preserves the previous focus/geometry behavior.
+- Upload API: the original 1536×1024 PNG was accepted with dimensions measured from its bytes; retained bytes matched; anonymous access returned 404; a corrupt PNG returned 415. The Chrome upload automation helper could not select files without an extension permission change, so this upload check used the local HTTP API. No browser permissions were changed.
+- Storage regressions cover actual PNG/MP4 metadata, corrupt tracks, measured metadata propagation, supported opaque artifact headers and attachment delivery. Provider requests remain mocked.
+- Review fixes prevent a stale tab from overwriting a newer saved draft and reset generation-detail project state when navigating. A focused rereview found no remaining concrete issue in those changes.
+
+These checks do not establish paid provider, production database/storage/email/billing acceptance, Lighthouse scores, complete screen-reader acceptance or pixel-identical source-site parity.
+
 ## 2026-10-17 follow-up
 
 - Public baseline `a65d233cae8be632712f3a992346067b8369932f` matched GitHub and Vercel production. Fifteen public routes returned 200; private APIs returned 401; four attempted mutations returned 503 / `SHOWCASE_READ_ONLY`. The catalog exposed 85 models with generation, authentication, uploads and billing disabled. Desktop/mobile navigation, model search and settings were checked with no browser errors or horizontal overflow.
@@ -41,4 +54,4 @@ The public showcase has been verified. Release-specific deployment IDs, commit S
 
 No real Higgsfield generation, MongoDB transaction, magic-link email, private R2 round trip, provider upload CORS, Stripe checkout or receipt delivery was verified. Live configuration and bounded acceptance remain required. No paid generation or payment was performed.
 
-Standalone audio REST, non-media artifact retention, full source-site visual parity, Lighthouse scores and comprehensive assistive-technology acceptance remain gaps. See the [completion checklist](completion-checklist.md) and [source provenance](source-provenance.md).
+Standalone audio REST, full source-site visual parity, Lighthouse scores and comprehensive assistive-technology acceptance remain gaps. Supported non-media artifacts are now retained as bounded opaque downloads; actual provider delivery still requires live acceptance. See the [completion checklist](completion-checklist.md) and [source provenance](source-provenance.md).

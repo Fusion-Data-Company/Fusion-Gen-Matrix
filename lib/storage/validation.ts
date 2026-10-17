@@ -1,6 +1,7 @@
 import "server-only";
 import { isIP } from "node:net";
 import { AppError } from "../errors";
+import {ARTIFACT_TYPES} from "./artifacts";
 import type { Surface } from "../types";
 
 export const MEDIA_LIMITS: Readonly<Record<Surface, number>> = { image: 20 * 1024 * 1024, video: 200 * 1024 * 1024, audio: 50 * 1024 * 1024 };
@@ -65,7 +66,7 @@ export function assertIdentifier(id: string): string {
  return id;
 }
 export function assertMediaKey(key:string):string {
- if(!/^u\/[A-Za-z0-9_-]{1,200}\/(?:uploads\/[A-Za-z0-9_-]{1,200}|generations\/[A-Za-z0-9_-]{1,200}\/[0-9]{1,3})\.(?:jpg|png|webp|gif|mp4|mov|webm|mp3|wav|ogg|m4a|svg)$/.test(key))throw new AppError("INVALID_MEDIA_KEY","Invalid media path.",404);
+ if(!/^u\/[A-Za-z0-9_-]{1,200}\/(?:uploads\/[A-Za-z0-9_-]{1,200}|generations\/[A-Za-z0-9_-]{1,200}\/[0-9]{1,3})\.(?:jpg|png|webp|gif|mp4|mov|webm|mp3|wav|ogg|m4a|svg|zip|jsx|fbx|ply)$/.test(key))throw new AppError("INVALID_MEDIA_KEY","Invalid media path.",404);
  return key;
 }
 export function mediaUrl(key:string):string { return "/api/media/"+assertMediaKey(key).split("/").map(encodeURIComponent).join("/"); }
@@ -73,6 +74,7 @@ export function contentTypeForKey(key:string):string {
  assertMediaKey(key);
  const extension=key.slice(key.lastIndexOf(".")+1);
  if(extension==="svg")return "image/svg+xml";
+ if(ARTIFACT_TYPES[extension])return ARTIFACT_TYPES[extension];
  const format=Object.values(formats).find(item=>item.extension===extension);
  if(!format)throw new AppError("INVALID_MEDIA_KEY","Invalid media path.",404);
  return format.contentType;
