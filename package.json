@@ -14,13 +14,15 @@
     "security:scan": "node scripts/check-client-secrets.mjs",
     "test:smoke": "node scripts/browser-smoke.mjs",
     "models": "node scripts/build-models.mjs",
-    "models:check": "node scripts/build-models.mjs --check"
+    "models:check": "node scripts/build-models.mjs --check",
+    "hf:seedance": "node --import tsx examples/higgsfield/index.ts"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "latest",
     "@aws-sdk/client-s3": "latest",
     "@aws-sdk/lib-storage": "latest",
     "@base-ui/react": "latest",
+    "@higgsfield/client": "0.2.6",
     "@react-email/components": "latest",
     "@react-email/render": "latest",
     "@tailwindcss/postcss": "^4.0.0",
