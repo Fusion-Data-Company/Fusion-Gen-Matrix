@@ -2,7 +2,7 @@
 import {useState,useEffect,useMemo,useRef,useEffectEvent} from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {useSearchParams} from "next/navigation";
+import {useRouter,useSearchParams} from "next/navigation";
 import {ChevronDown,SlidersHorizontal,Sparkles,Plus,Search,Check,UploadCloud,X,Film,Music2,ImageIcon,Grid2X2,Rows3,List,ArrowUpRight,Square} from "lucide-react";
 import type {Surface,Media,Upload,Generation,Project,Role} from "@/lib/types";
 import type {ModelEntry} from "@/lib/catalog";
@@ -20,7 +20,7 @@ const surfaceTitle={image:"Image studio",video:"Video studio",audio:"Audio studi
 const modeLabels:Record<string,string>={text:"Text",image:"Image",firstLast:"First + last",reference:"References",video:"Video",audio:"Audio"};
 interface Quote {credits:number;usd:number;mode:"demo"|"live";verified:boolean}
 export function GeneratorPage({surface}:{surface:Surface}) {
- const {data,loading,requireLogin,reload,notice,openUpgrade}=useStudio();const query=useSearchParams();
+ const {data,loading,requireLogin,reload,notice,openUpgrade}=useStudio();const query=useSearchParams(),router=useRouter();
  const draft=useDock(state=>state.drafts[surface]),update=useDock(state=>state.update);
  const [picker,setPicker]=useState(false),[settingsOpen,setSettingsOpen]=useState(false),[uploadRole,setUploadRole]=useState<Role|null>(null),[modelSearch,setModelSearch]=useState(""),[busy,setBusy]=useState(false),[cancelBusy,setCancelBusy]=useState(false),[error,setError]=useState(""),[quoteState,setQuoteState]=useState<{payload:string;value:Quote}|null>(null),[quoteError,setQuoteError]=useState(""),[tab,setTab]=useState<"history"|"help">("history"),[dense,setDense]=useState(false),[mode,setMode]=useState("create"),[inputMode,setInputMode]=useState(""),[projects,setProjects]=useState<Project[]>([]),[demoOutcome,setDemoOutcome]=useState("completed");
  const [historyFilter,setHistoryFilter]=useState<HistoryFilter>("all"),[historySearch,setHistorySearch]=useState(""),[list,setList]=useState(false);
@@ -51,7 +51,34 @@ export function GeneratorPage({surface}:{surface:Surface}) {
   finally{cancelPending.current=false;setCancelBusy(false);}
  }
  function chooseModel(next:ModelEntry) {setMode(/motion|genjutsu/i.test(next.id+" "+next.label)?"motion":next.roles.some(role=>role.required)?"edit":"create");update(surface,{modelId:next.id,settings:Object.fromEntries(next.settings.map(setting=>[setting.key,setting.default])),media:[],presetId:undefined});setInputMode(next.modes[0]??"text");setPicker(false);setError("");}
- useEffect(()=>{if(!models.length)return;const key=surface+"?"+query.toString();if(initialized.current===key)return;initialized.current=key;const preset=data?.presets.find(item=>item.slug===query.get("preset"));const selected=models.find(item=>item.id===(preset?.modelId??query.get("model")??draft.modelId))??models[0];const defaults=Object.fromEntries(selected.settings.map(setting=>[setting.key,setting.default]));update(surface,{modelId:selected.id,settings:preset?{...defaults,...preset.settings}:selected.id===draft.modelId?{...defaults,...draft.settings}:defaults,...(preset?{prompt:preset.promptTemplate,presetId:preset.id,media:[]}:query.get("prompt")?{prompt:query.get("prompt")!.slice(0,10000)}:{} )});setMode(/motion|genjutsu/i.test(selected.id+" "+selected.label)?"motion":selected.roles.some(role=>role.required)?"edit":"create");setInputMode(draft.media.length&&!preset?(selected.modes.find(item=>item!=="text")??selected.modes[0]??"text"):(selected.modes[0]??"text"));},[models,data?.presets,query,surface,update,draft.modelId,draft.settings,draft.media.length]);
+ useEffect(()=>{
+  if(!models.length)return;
+  const search=query.toString(),key=surface+"?"+search;
+  if(initialized.current===key)return;
+  initialized.current=key;
+  const preset=data?.presets.find(item=>item.active&&item.surface===surface&&item.slug===query.get("preset")&&models.some(model=>model.id===item.modelId));
+  const requested=models.find(item=>item.id===(preset?.modelId??query.get("model")));
+  const selected=requested??models.find(item=>item.id===draft.modelId)??models[0];
+  const changedModel=selected.id!==draft.modelId;
+  const defaults=Object.fromEntries(selected.settings.map(setting=>[setting.key,setting.default]));
+  const media=preset||changedModel?[]:draft.media;
+  update(surface,{
+   modelId:selected.id,
+   settings:preset?{...defaults,...preset.settings}:changedModel?defaults:{...defaults,...draft.settings},
+   ...(preset?{prompt:preset.promptTemplate,presetId:preset.id,media}:{
+    ...(changedModel?{media,presetId:undefined}:{}),
+    ...(query.has("prompt")?{prompt:query.get("prompt")!.slice(0,Math.min(10000,selected.promptMaxLength??10000))}:{})
+   })
+  });
+  setMode(/motion|genjutsu/i.test(selected.id+" "+selected.label)?"motion":selected.roles.some(role=>role.required)?"edit":"create");
+  setInputMode(media.length?(selected.modes.find(item=>item!=="text")??selected.modes[0]??"text"):(selected.modes[0]??"text"));
+  // A link supplies a starting point. Consume its entry fields so reload and
+  // sign-in restore the user's later edits instead of reapplying that link.
+  const remaining=new URLSearchParams(search);
+  for(const field of ["model","preset","prompt"])remaining.delete(field);
+  const rest=remaining.toString();
+  if(rest!==search)router.replace("/"+surface+(rest?"?"+rest:"")+window.location.hash,{scroll:false});
+ },[models,data?.presets,query,router,surface,update,draft.modelId,draft.settings,draft.media]);
  useEffect(()=>{if(!data?.user)return;void api<{items:Project[]}>("/api/projects").then(result=>setProjects(result.items)).catch(e=>setError(messageOf(e)));},[data?.user]);
  const quotePayload=JSON.stringify({modelId:model?.id,prompt:draft.prompt,settings:draft.settings,media:draft.media.map(item=>({id:item.id,role:item.role}))});
  const quote=quoteState?.payload===quotePayload?quoteState.value:null;

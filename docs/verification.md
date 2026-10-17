@@ -4,6 +4,16 @@ Latest checkpoint: 2026-10-17 (UTC). The original full-suite checkpoint below is
 
 The release is published as a [read-only showcase](https://fusion-gen-matrix.vercel.app). Interactive preview workflows use labeled sample media on a loopback-only local server.
 
+## 2026-10-17 draft entry-link follow-up
+
+A model-link entry left its model parameter in the URL. Changing from Soul 2 to Recraft V4.1, selecting 16:9/PNG, then reloading restored Soul 2 and its defaults. Model, preset and prompt parameters are now consumed after one valid prefill, so subsequent reload/sign-in/navigation restores the edited draft. Unrelated query parameters and the hash remain intact. Invalid model or wrong-surface effect links preserve the current valid draft. The interface styling is unchanged.
+
+- Eight focused state/persistence tests passed across `tests/client-state.test.ts` and `tests/dock-persistence.test.ts`; targeted generator ESLint passed. The Node.js 22 production build, TypeScript and generated-client secret scan (72 files) passed. The older comprehensive suite was not rerun for this scoped change.
+- An isolated production-build local preview confirmed the Recraft model, edited prompt, 16:9 aspect ratio and PNG format survived reload and local preview sign-in. Video-to-image return navigation retained the draft.
+- An unavailable model plus a video preset on the image surface preserved the current draft and removed only the entry fields. The valid Product Light effect selected Qwen Image 3; editing its recipe and reloading preserved the edit. A separate campaign parameter and `#main` hash survived both entry flows.
+- At 390×844, the document width remained 390px and the primary action's bottom edge remained inside the viewport. The rendered phone view retained the prompt/model controls and original styling. Browser error/warning capture was empty.
+- No generation, provider submission, email delivery or payment was requested in this check. Local preview authentication does not establish real magic-link delivery. Deployment evidence for this follow-up is recorded separately after publication.
+
 ## 2026-10-17 studio fidelity pass
 
 The cinematic Explore rail, floating image composer, video side panel, mobile shortcuts and original concept artwork were compared against fresh public reference captures. Reference images were not bundled in the application. Before/after captures and deployment details are retained locally in the release evidence.
