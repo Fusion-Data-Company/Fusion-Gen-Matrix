@@ -9,6 +9,7 @@ import { buildWebhookUrl, createWebhookToken, verifyWebhookToken } from "../lib/
 
 const examples: Record<string, Record<string, unknown>> = examplesData;
 const mapping = mappingData as Record<string, { key: string; role: MediaInput["role"]; kind: MediaInput["kind"]; array: boolean }[]>;
+const pricingDescription = "For 16:9 video without video input, your request costs roughly $0.2056 per second of generated video at 480p, $0.4622 at 720p, and $1.1372 at 1080p. Each 1,000 video tokens costs $0.0214 at 480p or 720p and $0.0234 at 1080p. Billable video tokens = ceil(output height × output width × (input video duration + generated video duration) × 24 / 1024). Image and audio references do not count as video input. Actual pricing depends on output dimensions and billable duration. Rates shown are before any applicable customer discount.";
 const soul = "higgsfield-ai/soul/v2/standard";
 const kling = "kling-video/v3.0/std/text-to-video";
 function fixture(id: string) {
@@ -156,6 +157,31 @@ describe("server-only provider adapter, no live requests", () => {
     expect(await client(quote).estimate(validateInput(soul, "test"))).toMatchObject({ usd: 0.0032 });
     expect(String(quote.mock.calls[0][0])).toBe("https://api.higgsfield.ai/estimate/" + soul);
     expect(() => new HiggsfieldClient({ credentials: "unit:test", baseUrl: "https://attacker.example" })).toThrow(HiggsfieldError);
+  });
+  it("accepts the observed Seedance tariff for the verified default request", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(json({ type: "description", pricing_description: pricingDescription }));
+    const quote = await client(fetcher).estimate(validateInput("bytedance/seedance-2.5/text-to-video", "A cinematic scene at sunset"));
+    expect(quote.usd).toBe(2.32);
+    expect(quote.providerCredits).toBeUndefined();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(String(fetcher.mock.calls[0][0])).toBe("https://api.higgsfield.ai/estimate/bytedance/seedance-2.5/text-to-video");
+  });
+  it("propagates increased Seedance rates instead of using a cached price", async () => {
+    for (const [description, expected] of [[pricingDescription.replace("$0.4622 at 720p", "$0.6000 at 720p"), 3], [pricingDescription.replace("$0.0214", "$0.0300"), 3.24]] as const) {
+      const fetcher = vi.fn<typeof fetch>().mockResolvedValue(json({ type: "description", pricing_description: description }));
+      expect((await client(fetcher).estimate(validateInput("bytedance/seedance-2.5/text-to-video", "test"))).usd).toBe(expected);
+    }
+  });
+  it("refuses to extrapolate Seedance tariffs to unverified inputs or formulas", async () => {
+    const estimate = (response: unknown, id = "bytedance/seedance-2.5/text-to-video", settings: Settings = {}) => client(vi.fn<typeof fetch>().mockResolvedValue(json(response))).estimate(validateInput(id, "test", settings));
+    const description = { type: "description", pricing_description: pricingDescription };
+    for (const settings of [{ duration: 6 }, { resolution: "1080p" }, { aspect_ratio: "9:16" }, { bitrate_mode: "standard" }, { output_format: "mov" }, { generate_audio: false }] as Settings[]) {
+      await expect(estimate(description, undefined, settings)).rejects.toMatchObject({ code: "INVALID_PROVIDER_RESPONSE" });
+    }
+    for (const response of [{ ...description, pricing_description: pricingDescription.replace("/ 1024", "/ 512") }, { ...description, pricing_description: pricingDescription + " Plus another fee." }, { ...description, usd: null }]) {
+      await expect(estimate(response)).rejects.toMatchObject({ code: "INVALID_PROVIDER_RESPONSE" });
+    }
+    await expect(estimate(description, soul)).rejects.toMatchObject({ code: "INVALID_PROVIDER_RESPONSE" });
   });
   it("handles successful empty cancellation and refuses to fake an already-started cancel", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(new Response(null, { status: 202 })).mockResolvedValueOnce(json({}, 400));

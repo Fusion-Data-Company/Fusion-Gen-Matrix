@@ -184,6 +184,14 @@ describe("atomic credits and generation lifecycle",()=>{
   const {service}=engine({mode:"live",submitError:new HiggsfieldError("Rejected",{status:422,ambiguous:false})});
   const g=await service.create("owner",{...input,maxCredits:4},randomUUID());expect(g.status).toBe("failed");expect((await repo.read(tx=>tx.get("profiles","owner")))?.subscriptionCredits).toBe(8);
  });
+ it("rejects increased provider estimates above the operator cap before debit or submission",async()=>{
+  const {service,provider}=engine({mode:"live"});
+  provider.estimate.mockResolvedValue({usd:5.4,providerCredits:"unneeded"});
+  await expect(service.create("owner",{...input,maxCredits:1000},randomUUID())).rejects.toMatchObject({code:"SPEND_LIMIT"});
+  expect(provider.submit).not.toHaveBeenCalled();
+  expect(await repo.read(tx=>tx.find("credit_ledger"))).toHaveLength(0);
+  expect(await repo.read(tx=>tx.find("generations"))).toHaveLength(0);
+ });
  it("requires a current client ceiling and rejects price changes before debit",async()=>{
   const {service}=engine({mode:"live"});
   await expect(service.create("owner",input,randomUUID())).rejects.toMatchObject({code:"QUOTE_REQUIRED"});

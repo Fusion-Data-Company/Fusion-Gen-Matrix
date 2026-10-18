@@ -89,6 +89,21 @@ node --env-file=.env.local --conditions=react-server --import tsx scripts/db-ini
 
 This creates/verifies indexes; it does not seed paid balances. Use the designated application database. [Next.js environment loading](https://nextjs.org/docs/app/guides/environment-variables)
 
+### Minimum for one monitored private-media workflow
+
+The current live implementation requires MongoDB, Auth.js with Resend magic-link delivery, and private R2 storage. MongoDB holds sessions, rate limits, jobs and the transactional credit ledger. Resend is the only configured live sign-in provider. A generation is marked completed only after its output is retained in R2. The loopback demo login, local file store and temporary provider URLs are not substitutes for those live services.
+
+The following can be deferred for a first **operator-monitored text-only request**, without removing capabilities:
+
+- **Stripe subscriptions/top-ups and receipts:** keep both billing flags false and the signup bonus at zero. After authenticated operator access is verified, use the existing admin credit adjustment with an explicit note and bounded allowance for the authorized account. These application credits do not fund the separate Higgsfield account. `ADMIN_EMAILS` grants an admin role; it is not a sign-in allowlist.
+- **Browser reference uploads/CORS:** start with a text-to-image or text-to-video model. Keep uploads unavailable until actual signed-upload origins and browser CORS are verified. R2 output retention is still required.
+- **Callbacks and an automatic schedule:** `HF_WEBHOOK_BASE_URL` may remain empty and the existing owned result's Refresh status action can perform authoritative polling and retention. This requires active operator monitoring; ordinary UI polling reads stored state only. Configure automatic reconciliation before unattended use. `HF_WEBHOOK_SECRET` and `CRON_SECRET` remain required live configuration even when callback delivery and the schedule are deferred.
+- **Commercial offers and broader feature acceptance:** defer paid plans, public launch, every-model acceptance and standalone audio; do not label them complete. Approve the relevant legal text before live registration/payment rollout.
+
+All required live values must be securely entered before switching `APP_MODE`. Initialize indexes, verify real sign-in and private retention, then obtain a fresh model quote and the explicit bounded generation authorization. This checklist does not authorize funding purchases, credential creation or a retry of an uncertain prior request.
+
+The standalone `pnpm hf:seedance` example already runs without MongoDB, Resend or R2, but it is a local operator tool, not the authenticated web app. Preserve its existing receipt and reconcile an uncertain submission before any later execution.
+
 ## 4. Verify identity and private storage
 
 Before paid requests:
@@ -131,7 +146,7 @@ Agree on a small total USD budget and explicit requests before testing paid gene
 6. Exercise failure/refund and cancellation paths with a controlled test strategy. A provider-finished result whose durable copy fails must remain pending retention; it must not be shown as safely stored.
 7. Verify the callback URL's HMAC token and server-side status refetch. The app does not trust provider output URLs or status from the callback body itself.
 
-Do not sweep all 85 endpoints as an unbounded paid test. Unsupported artifacts such as ZIP, JSX, FBX and PLY need further retention work; exclude them from claims of completed media support. [Provider contract and retry boundaries](provider-contract.md)
+Do not sweep all 85 endpoints as an unbounded paid test. ZIP, JSX, FBX and PLY are retained as validated opaque downloads; actual provider delivery remains unverified. Their local format tests do not establish live delivery. [Provider contract and retry boundaries](provider-contract.md)
 
 ## 7. Schedule reconciliation for live mode
 

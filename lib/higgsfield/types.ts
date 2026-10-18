@@ -8,4 +8,4 @@ export interface ProviderResult {
   statusUrl?: string; cancelUrl?: string; correlationId?: string;
 }
 export interface SignedUpload { uploadUrl: string; publicUrl: string; contentType: string; headers: Record<string, string> }
-export interface ProviderEstimate { usd: number; providerCredits: string; correlationId?: string }
+export interface ProviderEstimate { usd: number; providerCredits?: string; correlationId?: string }

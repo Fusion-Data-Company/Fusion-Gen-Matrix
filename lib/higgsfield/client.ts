@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { seedance720pTariffUsd } from "./estimate";
 import { assertPublicHttpsUrl, mapToProvider } from "../catalog/server";
 import type { ValidatedInput } from "../catalog/types";
 import type { ProviderEstimate, ProviderOutput, ProviderResult, ProviderStatus, SignedUpload } from "./types";
@@ -189,6 +190,8 @@ export class HiggsfieldClient {
     const mapped = mapToProvider(input);
     const response = await this.request(this.endpoint("estimate/" + mapped.path), "POST", mapped.body, { retry: true });
     const data = record(response.data);
+    const describedUsd = seedance720pTariffUsd(data, mapped.path, mapped.body);
+    if (describedUsd !== undefined) return { usd: describedUsd, ...(typeof data.credits === "string" ? { providerCredits: data.credits } : {}), correlationId: response.correlationId };
     const usd = typeof data.usd === "string" && /^\d+(\.\d+)?$/.test(data.usd) ? Number(data.usd) : NaN;
     if (!Number.isFinite(usd) || usd < 0 || typeof data.credits !== "string") throw new HiggsfieldError("The provider did not return a valid price estimate.", { code: "INVALID_PROVIDER_RESPONSE" });
     return { usd, providerCredits: data.credits, correlationId: response.correlationId };

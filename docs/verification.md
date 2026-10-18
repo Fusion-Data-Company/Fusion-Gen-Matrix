@@ -4,6 +4,14 @@ Latest checkpoint: 2026-10-17 (UTC). The original full-suite checkpoint below is
 
 The release is published as a [read-only showcase](https://fusion-gen-matrix.vercel.app). Interactive preview workflows use labeled sample media on a loopback-only local server.
 
+## 2026-10-18 live quote compatibility
+
+The earlier authenticated Seedance estimate returned a pricing description rather than numeric USD/provider credits. The standalone example accepted that verified tariff, but the web client's quote parser still rejected it. A mocked regression reproduced this failure before the fix. The app and example now share the strict parser for the verified Seedance 2.5 text-to-video request: five seconds, 720p, 16:9, high bitrate, MP4 and native audio (explicit defaults or provider defaults). Each quote computes the conservative amount from the newly returned full formula; rates are not hard-coded. Unsupported settings, different formulas, extra fees and contradictory numeric fields still fail closed. Provider credits are omitted when the response supplies none; no conversion is invented.
+
+- 150 focused catalog/provider, generation-lifecycle and SDK tests passed. Coverage includes changed settings/formulas, increased rates, rejection above the operator's USD limit before debit/submission, and preservation of the SDK's one-attempt guard.
+- Targeted ESLint, Node.js 22 production build/TypeScript and the generated-client secret scan (72 files) passed. No credential values were read or printed, and no provider estimate, generation or retry was requested during this fix.
+- The existing SDK receipt remains `submission_attempted`, without an accepted request ID or video URL. The public app stays in showcase mode pending live service configuration; this change establishes quote-parser compatibility, not completed provider execution.
+
 ## 2026-10-17 creation and result-management batch
 
 Four reproduced workflow defects are fixed together: reused optional references now remain visible in the composer; library search clears hidden selections and bulk actions target only visible selected records; reopening a canceled project move restores the saved destination; and every retained output can be previewed and selected for a subsequent generation. Animate uses the chosen image, and reference drafts retain an explicit output index across reload. The server resolves that index against the owner's completed result and rejects missing, incompatible or foreign outputs before quoting or debiting. Legacy references without an index remain compatible.
