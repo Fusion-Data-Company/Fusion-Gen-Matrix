@@ -62,15 +62,27 @@ Serve every media response with `X-Content-Type-Options: nosniff` and `Cache-Con
 
 ## Local and live stores
 
-Public showcase mode rejects private storage operations with HTTP 503 before constructing a provider or R2 client.
+Public showcase mode rejects private storage operations with HTTP 503 before constructing a provider or storage client.
 
 Preview files live under `<DATA_DIR>/media`. Writes use a private temporary file, fsync and atomic rename. A new store instance can read earlier files, including after application restart.
 
-Live storage uses the official S3-compatible R2 endpoint, region `auto`, private objects, and the configured bucket. Required configuration is `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`; provider input preparation additionally requires `HF_CREDENTIALS`. The wider app validates its own required live configuration. Account IDs and bucket names are constrained; endpoints cannot be redirected via an arbitrary environment URL.
+Legacy storage selected explicitly with `MEDIA_STORAGE_PROVIDER=r2` uses the official S3-compatible R2 endpoint, region `auto`, private objects, and the configured bucket. Required configuration is `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`; provider input preparation additionally requires `HF_CREDENTIALS`. The wider app validates its own required live configuration. Account IDs and bucket names are constrained; endpoints cannot be redirected via an arbitrary environment URL.
+
+## Default private Vercel Blob storage
+
+Live storage defaults to `MEDIA_STORAGE_PROVIDER=vercel-blob`. Connect a dedicated **private** Blob store to the approved deployment environment before live activation. Demo and showcase behavior are unchanged. R2 variables are not required for the standard stack; the app's other live-service requirements remain.
+
+The official `@vercel/blob` SDK is pinned to 2.8.2. On Vercel, use the SDK's automatic authentication with the platform-managed `VERCEL_OIDC_TOKEN` and connected `BLOB_STORE_ID`. For another runtime, an existing server-only `BLOB_READ_WRITE_TOKEN` is supported. The adapter never returns these credentials or Blob URLs to the browser. Custom Blob API endpoint overrides are refused for live storage.
+
+The adapter implements the same `MediaStore` contract and retains the existing relative object keys (including the historical `r2Key` database field name). Every upload requests private access, deterministic paths and overwrite support for retention retries; larger writes use SDK multipart upload. Reads bypass the private CDN cache, and the app media route keeps `private, no-store` responses and the existing owner/publication checks. The SDK's minimum stored cache lifetime is 60 seconds; authorization is still evaluated by the app on every media request.
+
+Ranged reads first obtain object size, normalize the requested byte range and forward only a validated Range header through the SDK. SDK 2.8.2 labels successful GETs as status 200 even when upstream headers describe a partial response, so the adapter verifies Content-Range and Content-Length before returning 206. An origin that ignores Range returns a full 200 response. Invalid ranges return 416; missing objects return 404; SDK failures are sanitized. No direct browser Blob-upload route or public storage fallback is introduced.
+
+Switching providers does not migrate existing objects. Existing paths are resolved against the selected store, so an installation with live data must copy and verify its files before switching. Do not activate or change a production provider simply by adding this code.
 
 ## Verification and remaining live checks
 
-Focused tests: `node node_modules/vitest/vitest.mjs run tests/storage.test.ts`. Tests cover signature/type/size validation, path traversal, range behavior, private/reserved DNS including alternate IPv6 spellings, actual pinned HTTPS lookup, signed-header forwarding, redirect/oversize rejection, durable local reads and deletion, fresh provider input preparation, deterministic output retention, a later-copy failure, explicit sample behavior, bounded streams, mocked R2 operations, direct-upload metadata limits, exact origin restrictions, ownership, expiry, concurrent completion, retry leases, and regeneration from verified private bytes.
+Focused tests: `node node_modules/vitest/vitest.mjs run tests/storage.test.ts tests/blob-storage.test.ts`. Blob tests use mocked SDK operations and isolated auth/repository fixtures, including owner-only downloads, generation ownership, pending/deleted records, ranged responses, errors and provider-specific configuration. Vitest disables environment-file loading.  Tests cover signature/type/size validation, path traversal, range behavior, private/reserved DNS including alternate IPv6 spellings, actual pinned HTTPS lookup, signed-header forwarding, redirect/oversize rejection, durable local reads and deletion, fresh provider input preparation, deterministic output retention, a later-copy failure, explicit sample behavior, bounded streams, mocked R2 operations, direct-upload metadata limits, exact origin restrictions, ownership, expiry, concurrent completion, retry leases, and regeneration from verified private bytes.
 
 The local and mocked tests make no paid generation calls and create no credentials or provider resources. R2 credentials and the standalone Higgsfield REST credentials were not available for this task, so a real bucket put/get/delete, a real signed upload, and a generated provider-output retention round trip have NOT been verified. Those are the finite live acceptance checks remaining; mocked SDK results do not establish live access.
 
@@ -81,3 +93,5 @@ Sources verified 2026-10-15:
 ## Measured metadata
 
 `metadata.ts` reads dimensions from Sharp and duration/video geometry from Mediabunny using retained bytes. Both server and direct-upload completion persist those values; retained provider outputs use measured values instead of provider hints. Source resolution forwards those fields to model validation. Missing/corrupt tracks or dimensions reject the file before a ready record is created. Legacy media records without measurements should be re-uploaded. Tests: `tests/media-metadata.test.ts`.
+
+Blob sources verified 2026-10-18: [official JS SDK](https://vercel.com/docs/vercel-blob/using-blob-sdk), [private storage](https://vercel.com/docs/vercel-blob/private-storage), and the installed SDK 2.8.2 types/source. Live Blob put/get/delete and video-range acceptance remain unverified until a specific private store is approved and configured.

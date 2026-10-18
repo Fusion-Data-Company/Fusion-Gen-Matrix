@@ -15,10 +15,13 @@
     "test:smoke": "node scripts/browser-smoke.mjs",
     "models": "node scripts/build-models.mjs",
     "models:check": "node scripts/build-models.mjs --check",
-    "hf:seedance": "node --import tsx examples/higgsfield/index.ts"
+    "hf:seedance": "node --import tsx examples/higgsfield/index.ts",
+    "db:migrate:postgres": "node --import tsx scripts/migrate-postgres.ts",
+    "test:postgres": "node scripts/test-postgres.mjs"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "latest",
+    "@auth/pg-adapter": "1.11.3",
     "@aws-sdk/client-s3": "latest",
     "@aws-sdk/lib-storage": "latest",
     "@base-ui/react": "latest",
@@ -27,6 +30,8 @@
     "@react-email/render": "latest",
     "@tailwindcss/postcss": "^4.0.0",
     "@tanstack/react-virtual": "latest",
+    "@vercel/blob": "2.8.2",
+    "@vercel/functions": "3.10.1",
     "ajv": "^8.0.0",
     "ajv-formats": "^3.0.0",
     "clsx": "latest",
@@ -35,6 +40,7 @@
     "mongodb": "^6.20.0",
     "next": "^16.4.2",
     "next-auth": "5.0.0-beta.32",
+    "pg": "8.23.1",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "resend": "latest",
@@ -49,6 +55,7 @@
   "devDependencies": {
     "@playwright/test": "latest",
     "@types/node": "^24.0.0",
+    "@types/pg": "8.23.1",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "eslint": "^9.0.0",

@@ -45,6 +45,7 @@ export class GenerationService{
  async owned(userId:string,id:string,allowDeleted=false){const g=await this.repo.read(tx=>tx.get("generations",id));if(!g||g.userId!==userId||(!allowDeleted&&g.deletedAt))notFound();return g;}
  private async prepare(userId:string,input:GenerationInput){
   const media:Media[]=[],providerMedia:Media[]=[];
+  const transfers:Parameters<typeof getProviderMediaUrl>[0][]=[];
   await this.repo.read(async tx=>{
    if(input.projectId){const p=await tx.get("projects",input.projectId);if(!p||p.userId!==userId)notFound();}
    const override=await tx.get("model_pricing",input.modelId);
@@ -54,9 +55,9 @@ export class GenerationService{
     if(upload&&upload.userId===userId&&upload.status!=="pending"){
      if(item.outputIndex!==undefined)throw new AppError("INVALID_REFERENCE","Output selection only applies to generated assets.");
      if(!upload.r2Key)throw new AppError("MEDIA_UNAVAILABLE","This attachment needs to be uploaded again.");
-     const url=this.options.mode==="demo"?"https://preview.invalid/"+encodeURIComponent(item.id):await this.options.mediaUrl({r2Key:upload.r2Key,contentType:upload.contentType,providerUrl:upload.providerUrl});
+     transfers.push({r2Key:upload.r2Key,contentType:upload.contentType,providerUrl:upload.providerUrl});
      media.push({id:upload.id,url:upload.url,kind:upload.kind,role:item.role,contentType:upload.contentType,bytes:upload.bytes,width:upload.width,height:upload.height,durationSec:upload.durationSec});
-     providerMedia.push({...media.at(-1)!,url});continue;
+     continue;
     }
     const g=await tx.get("generations",item.id);
     if(!g||g.deletedAt||g.userId!==userId||g.status!=="completed"||!g.outputs.length)notFound();
@@ -64,12 +65,16 @@ export class GenerationService{
     const output=item.outputIndex===undefined?g.outputs.find(output=>output.kind===expectedKind):g.outputs[item.outputIndex];
     if(!output)throw new AppError("MEDIA_UNAVAILABLE","This output is unavailable. Choose another reference.",404);
     if(output.kind==="artifact"||output.kind!==expectedKind)throw new AppError("UNSUPPORTED_REFERENCE","Choose a compatible image, video, or audio output for this reference.",400);
-    const url=this.options.mode==="demo"?"https://preview.invalid/"+encodeURIComponent(item.id):await this.options.mediaUrl({r2Key:output.r2Key,contentType:output.contentType});
+    transfers.push({r2Key:output.r2Key,contentType:output.contentType});
     media.push({id:g.id,...(item.outputIndex===undefined?{}:{outputIndex:item.outputIndex}),url:output.url,kind:output.kind,role:item.role,contentType:output.contentType,width:output.width,height:output.height,durationSec:output.durationSec});
-    providerMedia.push({...media.at(-1)!,url});
    }
   });
   if(input.settings.file_url||input.settings.link_url)throw new AppError("OWNED_MEDIA_REQUIRED","Use a studio upload for media references. External document and web references are not enabled.");
+  // Release the read snapshot before any external media transfer.
+  for(let index=0;index<media.length;index++){
+   const item=media[index],url=this.options.mode==="demo"?"https://preview.invalid/"+encodeURIComponent(item.id):await this.options.mediaUrl(transfers[index]);
+   providerMedia.push({...item,url});
+  }
   const validated=validateInput(input.modelId,input.prompt,input.settings,providerMedia);
   return {validated,media,providerMedia};
  }

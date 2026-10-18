@@ -1,8 +1,19 @@
 # Release verification
 
-Latest checkpoint: 2026-10-17 (UTC). The original full-suite checkpoint below is from 2026-10-15, America/Los_Angeles (PDT).
+Latest checkpoint: 2026-10-18 (UTC). The original full-suite checkpoint below is from 2026-10-15, America/Los_Angeles (PDT).
 
 The release is published as a [read-only showcase](https://fusion-gen-matrix.vercel.app). Interactive preview workflows use labeled sample media on a loopback-only local server.
+
+## 2026-10-18 Neon PostgreSQL and private Vercel Blob
+
+The default live stack now uses Neon PostgreSQL and private Vercel Blob, with GitHub source and Vercel hosting. Demo file storage and showcase behavior are preserved. Explicit legacy MongoDB/R2 adapters remain available for compatibility; they are no longer required by the standard setup.
+
+- The reviewed migration creates twelve app tables plus its migration marker, four Auth.js tables, ownership/query indexes and database constraints. Credit writes use serializable transactions with bounded retries; reads use one repeatable-read snapshot. Provider media transfers happen after the snapshot closes. Cleanup rechecks expiry after row-lock waits and preserves audit records.
+- Before the final default-selection update, 280 standard tests passed. Twenty-seven real PostgreSQL 18 integration tests passed, including concurrent debits/refunds, duplicate submissions/events, uncertain commit handling, private ownership, atomic token consumption, session revocation, retention retries and the rate-limit expiry reset race. The disposable database ran on a local Unix socket and was removed afterward.
+- After changing the defaults to PostgreSQL and Blob, all 100 targeted configuration, storage, auth/billing and generation tests passed; TypeScript passed. Scoped ESLint and the Node.js 22 production build also passed during this checkpoint. The build selected PostgreSQL/Blob explicitly and its generated-client scan passed across 73 files using fake canaries, without loading local credentials.
+- A dedicated Neon project on the existing Free plan was created. The exact migration checksum was recorded, and a committed setup probe was retrieved in a separate database request. That confirms schema creation and remote persistence; it does not establish deployed application access. No unrelated database was reused or modified.
+- The private Blob adapter has mocked coverage for private writes, byte ranges, missing objects, invalid responses and bounded failures. No actual private store round trip has completed. Runtime database access and Blob provisioning remain separately gated by their scoped approval and deployment checks.
+- The deployed app remains in showcase mode until live authentication, private storage and owner isolation are verified. No new paid generation, email, checkout or subscription change was requested during this work.
 
 ## 2026-10-18 live quote compatibility
 
@@ -91,6 +102,6 @@ Run the commands in the [launch runbook](launch-runbook.md). Browser runners req
 
 The public showcase has been verified. Release-specific deployment IDs, commit SHAs and inspection details are retained in ignored `docs/evidence/`; a READY deployment alone does not certify live services.
 
-No real Higgsfield generation, MongoDB transaction, magic-link email, private R2 round trip, provider upload CORS, Stripe checkout or receipt delivery was verified. Live configuration and bounded acceptance remain required. No paid generation or payment was performed.
+Real PostgreSQL transactions and dedicated Neon persistence have been verified as described above. Deployed application database access, magic-link email, a private Vercel Blob round trip, real Higgsfield completion, provider upload CORS, Stripe checkout and receipt delivery still require bounded live acceptance. The earlier standalone provider receipt remains incomplete; no paid generation or payment was requested during the PostgreSQL/Blob work.
 
 Standalone audio REST, full source-site visual parity, Lighthouse scores and comprehensive assistive-technology acceptance remain gaps. Supported non-media artifacts are now retained as bounded opaque downloads; actual provider delivery still requires live acceptance. See the [completion checklist](completion-checklist.md) and [source provenance](source-provenance.md).

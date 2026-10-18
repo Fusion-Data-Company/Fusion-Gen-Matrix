@@ -220,6 +220,8 @@ describe("billing ledger and lifecycle", () => {
 describe("Stripe ingress", () => {
   function liveFixtures() {
     vi.stubEnv("APP_MODE", "live");
+    vi.stubEnv("DATABASE_PROVIDER", "mongodb");
+    vi.stubEnv("MEDIA_STORAGE_PROVIDER", "r2");
     vi.stubEnv("APP_URL", "https://studio.example.com");
     vi.stubEnv("BILLING_PRICES_CONFIRMED", "true");
     vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_fixture_not_a_credential");

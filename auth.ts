@@ -3,6 +3,8 @@ import NextAuth from "next-auth";
 import ResendProvider from "next-auth/providers/resend";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import { mongoClient } from "@/lib/db/mongo";
+import { postgresPool } from "@/lib/db/postgres";
+import { matrixPostgresAdapter } from "@/lib/auth/postgres-adapter";
 import { getEnv } from "@/lib/env";
 import { ensureProfile, normalizeEmail, liveRole } from "@/lib/auth/profile";
 import { sendMagicLink } from "@/lib/billing/email";
@@ -11,7 +13,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
   const env = getEnv();
   if (env.APP_MODE !== "live") return { providers: [], session: { strategy: "database" as const }, trustHost: false };
   return {
-    adapter: MongoDBAdapter(mongoClient, { databaseName: env.MONGODB_DB }),
+    adapter: env.DATABASE_PROVIDER === "postgres" ? matrixPostgresAdapter(postgresPool()) : MongoDBAdapter(mongoClient, { databaseName: env.MONGODB_DB }),
     secret: process.env.AUTH_SECRET,
     trustHost: true,
     useSecureCookies: true,

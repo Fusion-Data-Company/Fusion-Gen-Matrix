@@ -67,12 +67,12 @@ Use a separate environment for live acceptance before opening paid access. Popul
 | Group | Variables and behavior |
 | --- | --- |
 | App | `APP_MODE=live`; `APP_URL` and `AUTH_URL` set to the exact HTTPS studio origin |
-| MongoDB | `MONGODB_URI`; `MONGODB_DB` defaults to `fusion_gen_matrix`. Use Atlas or a replica set with multi-document transactions |
+| Database | Default `DATABASE_PROVIDER=postgres`: dedicated Matrix Neon database, pooled `DATABASE_URL`, and the reviewed [Postgres migration](postgres.md). Explicit legacy MongoDB mode requires `MONGODB_URI` and a transaction-capable replica set |
 | Auth | `AUTH_SECRET` with at least 32 characters; `ADMIN_EMAILS` is the comma-separated server admin allowlist |
 | Resend | `AUTH_RESEND_KEY`; `EMAIL_FROM` on a verified sending domain |
 | Higgsfield | `HF_CREDENTIALS=key_id:key_secret`; `HF_API_BASE_URL=https://api.higgsfield.ai`; `HF_WEBHOOK_SECRET` with at least 32 characters |
 | Callback origin | `HF_WEBHOOK_BASE_URL` set to the reachable HTTPS studio origin to enable provider callbacks; an empty value omits the callback and relies on reconciliation |
-| R2 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`; use a private bucket |
+| Private media | Default `MEDIA_STORAGE_PROVIDER=vercel-blob`: private Blob store with `BLOB_STORE_ID` and platform-managed OIDC, or an existing `BLOB_READ_WRITE_TOKEN`. Explicit legacy R2 mode requires `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`. See [storage](storage.md); store creation/connection and any data migration are separate reviewed steps |
 | Direct upload origins | `HF_UPLOAD_ORIGINS`: comma-separated exact provider HTTPS origins verified from the actual signed upload contract |
 | Optional transfer restriction | `HF_MEDIA_ALLOWED_HOSTS`: exact hostnames for server-side transfers; if used, include verified upload and output hosts |
 | Scheduler | `CRON_SECRET` with at least 32 characters |
@@ -87,16 +87,16 @@ Next.js loads supported local environment files during application startup. The 
 node --env-file=.env.local --conditions=react-server --import tsx scripts/db-init.ts
 ```
 
-This creates/verifies indexes; it does not seed paid balances. Use the designated application database. [Next.js environment loading](https://nextjs.org/docs/app/guides/environment-variables)
+In MongoDB mode this creates/verifies indexes; in Postgres mode it only verifies the schema marker. Apply the explicit [Postgres migration](postgres.md) separately before activation. Neither operation seeds paid balances. Use the designated application database. [Next.js environment loading](https://nextjs.org/docs/app/guides/environment-variables)
 
 ### Minimum for one monitored private-media workflow
 
-The current live implementation requires MongoDB, Auth.js with Resend magic-link delivery, and private R2 storage. MongoDB holds sessions, rate limits, jobs and the transactional credit ledger. Resend is the only configured live sign-in provider. A generation is marked completed only after its output is retained in R2. The loopback demo login, local file store and temporary provider URLs are not substitutes for those live services.
+The live implementation requires a configured Neon Postgres database (or explicitly selected legacy MongoDB), Auth.js with Resend magic-link delivery, and private Vercel Blob storage (or explicitly selected legacy R2). The database holds sessions, rate limits, jobs and the transactional credit ledger. Resend is the only configured live sign-in provider. A generation is marked completed only after its output is retained privately. The loopback demo login, local file store and temporary provider URLs are not substitutes for those live services.
 
 The following can be deferred for a first **operator-monitored text-only request**, without removing capabilities:
 
 - **Stripe subscriptions/top-ups and receipts:** keep both billing flags false and the signup bonus at zero. After authenticated operator access is verified, use the existing admin credit adjustment with an explicit note and bounded allowance for the authorized account. These application credits do not fund the separate Higgsfield account. `ADMIN_EMAILS` grants an admin role; it is not a sign-in allowlist.
-- **Browser reference uploads/CORS:** start with a text-to-image or text-to-video model. Keep uploads unavailable until actual signed-upload origins and browser CORS are verified. R2 output retention is still required.
+- **Browser reference uploads/CORS:** start with a text-to-image or text-to-video model. Keep uploads unavailable until actual signed-upload origins and browser CORS are verified. Private output retention is still required.
 - **Callbacks and an automatic schedule:** `HF_WEBHOOK_BASE_URL` may remain empty and the existing owned result's Refresh status action can perform authoritative polling and retention. This requires active operator monitoring; ordinary UI polling reads stored state only. Configure automatic reconciliation before unattended use. `HF_WEBHOOK_SECRET` and `CRON_SECRET` remain required live configuration even when callback delivery and the schedule are deferred.
 - **Commercial offers and broader feature acceptance:** defer paid plans, public launch, every-model acceptance and standalone audio; do not label them complete. Approve the relevant legal text before live registration/payment rollout.
 
@@ -108,10 +108,10 @@ The standalone `pnpm hf:seedance` example already runs without MongoDB, Resend o
 
 Before paid requests:
 
-1. Confirm MongoDB connectivity and transaction support, then initialize indexes.
+1. Confirm connectivity and transaction support for the approved Matrix database, then verify MongoDB indexes or the reviewed Postgres migration.
 2. Request one real magic link to the authorized test account. Verify delivery, the ten-minute expiry behavior, sign-in, sign-out, and session revocation. Check that a session response contains identity/role without a cached credit balance.
 3. Confirm an ordinary user cannot access admin routes or another user's generation, project, upload or private media key. Cross-user resources must remain unavailable.
-4. Perform an authorized R2 test put/read/delete through the application's storage path. Confirm media is private and survives a new process/deployment.
+4. Perform an authorized private storage test put/read/delete through the application's selected R2 or Blob path. Confirm media is private and survives a new process/deployment.
 5. Replace the explicit draft terms, privacy and acceptable-use pages with owner-approved text before live registration or payments.
 
 Auth.js uses database sessions. Application profiles and balances are stored separately from adapter-owned users and sessions. See [auth and billing](auth-billing.md) and [private storage](storage.md).

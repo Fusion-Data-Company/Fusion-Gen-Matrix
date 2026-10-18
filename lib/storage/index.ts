@@ -10,7 +10,8 @@ import type { Generation, Output, Upload } from "../types";
 import { HiggsfieldClient } from "../higgsfield/client";
 import type { ProviderOutput, SignedUpload } from "../higgsfield/types";
 import { safeMediaRequest, safeUploadHeaders, resolvePublicHttps } from "./network";
-import { createR2Store, LocalMediaStore, type MediaResponse, type MediaStore } from "./store";
+import { LocalMediaStore, type MediaResponse, type MediaStore } from "./store";
+import { createLiveMediaStore } from "./provider";
 import { assertIdentifier, assertMediaKey, HF_UPLOAD_TYPES, MEDIA_LIMITS, mediaUrl, formatForType, normalizeContentType, sanitizeMediaName, sniffMedia } from "./validation";
 
 import { configuredUploadOrigins, validateDirectInput, type DirectUploadInput, type PendingDirectUpload, type PreparedDirectUpload, type ReadyDirectUpload } from "./direct-contract";
@@ -162,7 +163,7 @@ function service():MediaService{
  const env=getEnv();
  if(env.APP_MODE==="showcase")throw new AppError("STORAGE_NOT_CONFIGURED","Private media storage is unavailable in this showcase. Configure the live services to enable uploads and generation.",503);
  if(env.APP_MODE==="demo")return new MediaService({mode:"demo",store:new LocalMediaStore(path.join(env.DATA_DIR,"media")),demoVideoPath:path.join(process.cwd(),"public","fixtures","demo-motion.mp4")});
- return new MediaService({mode:"live",store:createR2Store(),provider:new HiggsfieldClient({credentials:process.env.HF_CREDENTIALS??"",baseUrl:env.HF_API_BASE_URL})});
+ return new MediaService({mode:"live",store:createLiveMediaStore(env.MEDIA_STORAGE_PROVIDER),provider:new HiggsfieldClient({credentials:process.env.HF_CREDENTIALS??"",baseUrl:env.HF_API_BASE_URL})});
 }
 export function saveUpload(userId:string,file:File){return service().saveUpload(userId,file);}
 export function retainOutputs(generation:Generation,outputs:ProviderOutput[]){return service().retainOutputs(generation,outputs);}

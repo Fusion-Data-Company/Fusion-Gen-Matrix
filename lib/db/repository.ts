@@ -4,6 +4,9 @@ import path from "node:path";
 import {randomUUID} from "node:crypto";
 import type {ClientSession,Collection,Document,Filter} from "mongodb";
 import {mongoClient} from "./mongo";
+import {postgresPool} from "./postgres";
+import {PostgresRepository} from "./postgres-repository";
+import {verifyPostgresSchema} from "./postgres-maintenance";
 import {getEnv} from "../env";
 import type {Profile,Generation,Project,Upload,LedgerEntry,EventRecord,Preset,PricingOverride,Report,RateLimit,PreviewSession} from "../types";
 export interface Tables {profiles:Profile;generations:Generation;projects:Project;uploads:Upload;credit_ledger:LedgerEntry;stripe_events:EventRecord;hf_webhook_events:EventRecord;presets:Preset;model_pricing:PricingOverride;reports:Report;rate_limits:RateLimit;preview_sessions:PreviewSession}
@@ -72,8 +75,9 @@ class MongoRepository implements Repository{
  async read<T>(fn:(tx:Transaction)=>Promise<T>){const c=await mongoClient();return fn(new MongoTx(c.db(getEnv().MONGODB_DB)));}
  async transaction<T>(fn:(tx:Transaction)=>Promise<T>){const c=await mongoClient();const session=c.startSession();try{return await session.withTransaction(()=>fn(new MongoTx(c.db(getEnv().MONGODB_DB),session)),{readConcern:{level:"snapshot"},writeConcern:{w:"majority"}});}finally{await session.endSession();}}
 }
-export function repository():Repository{if(getEnv().APP_MODE==="showcase")throw new Error("Hosted showcase has no private data store");return getEnv().APP_MODE==="demo"?new FileRepository(getEnv().DATA_DIR):new MongoRepository();}
+export function repository():Repository{if(getEnv().APP_MODE==="showcase")throw new Error("Hosted showcase has no private data store");return getEnv().APP_MODE==="demo"?new FileRepository(getEnv().DATA_DIR):getEnv().DATABASE_PROVIDER==="postgres"?new PostgresRepository(postgresPool()):new MongoRepository();}
 export async function initializeIndexes(){
+ if(getEnv().DATABASE_PROVIDER==="postgres")return verifyPostgresSchema(postgresPool());
  const db=(await mongoClient()).db(getEnv().MONGODB_DB);
  for(const name of names)await db.collection(name).createIndex({id:1},{unique:true});
  await db.collection("profiles").createIndex({stripeCustomerId:1},{unique:true,sparse:true});

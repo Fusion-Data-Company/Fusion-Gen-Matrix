@@ -1,10 +1,10 @@
 # Fusion Gen Matrix identity and billing
 
-The app separates three modes. Demo is an explicitly local preview on loopback. Showcase is public and read-only, with no authenticated user. Live uses Auth.js v5 database sessions and MongoDB; missing live configuration fails closed.
+The app separates three modes. Demo is an explicitly local preview on loopback. Showcase is public and read-only, with no authenticated user. Live uses Auth.js v5 database sessions and the selected MongoDB or Postgres repository; missing live configuration fails closed.
 
 ## Identity
 
-Auth.js uses the official MongoDB adapter and the existing cached MongoClient. Adapter users, sessions and verification tokens remain in the adapter collections; application profiles and credit balances live in profiles, keyed by the same user ID. This avoids changing the adapter's ObjectId representation. Session responses contain only user ID and role plus session expiry. Every privileged API reloads the application profile. ADMIN_EMAILS is a comma-separated deployment allowlist and is checked server-side.
+The default Neon configuration uses `DATABASE_PROVIDER=postgres` and the official pg adapter with atomic-update and expiry overrides on the shared pool. Explicit legacy MongoDB configuration uses its official Auth.js adapter and cached MongoClient. Adapter users, sessions and verification tokens remain separate from application profiles and balances, keyed by the same user ID. Postgres stores IDs as text, preserving existing identifiers; see [database setup and migration](postgres.md). Session responses contain only user ID and role plus session expiry. Every privileged API reloads the application profile. ADMIN_EMAILS is a comma-separated deployment allowlist and is checked server-side.
 
 Magic links expire after 10 minutes and use a branded React Email template with HTML, text and a fallback URL. The handler limits requests by network bucket and normalized email. Only explicitly trusted reverse proxies can supply an IP header; deployments using another trusted proxy must set TRUST_PROXY=true. With no trusted proxy, the shared direct-network bucket is intentionally conservative.
 
@@ -26,13 +26,13 @@ Refund handling uses the cumulative refunded amount and proportionally claws bac
 
 ## Operations
 
-1. Configure the live environment, initialize MongoDB indexes and connect a verified Resend sending domain.
+1. Configure the live environment, verify MongoDB indexes or the approved Postgres migration, and connect a verified Resend sending domain.
 2. Configure reviewed Stripe prices and the customer portal in the intended test account. Do not enable live billing merely because an unrelated Stripe key exists in the environment.
 3. Forward Stripe test webhooks to /api/webhooks/stripe and verify subscription, top-up, asynchronous payment, refund and replay cases in a real test account.
-4. Schedule the protected reconciler. It must invoke retryStripeEvents(), reconcileBilling() and retryCreditReceipts(). Reconciliation currently scans at most 5,000 term records per run; add cursor pagination before exceeding that account scale.
+4. Schedule the protected reconciler. It must invoke retryStripeEvents(), reconcileBilling() and retryCreditReceipts(); in Postgres mode it also performs bounded expiry cleanup. Reconciliation currently scans at most 5,000 term records per run; add cursor pagination before exceeding that account scale.
 5. Test magic-link delivery, expiry, logout and session revocation on the final public URL.
 
-Automated tests exercise preview sessions, role boundaries, cross-origin rejection, rate-limit concurrency, repeated top-ups, customer mismatch, concurrent event replay, subscription reset, annual month-end renewal, partial and full refunds, refund ordering and cancellation expiry. Live MongoDB transaction behavior, real email delivery, Stripe test checkout and the customer portal require the external configuration and were not exercised by these local tests.
+Automated tests exercise preview sessions, role boundaries, cross-origin rejection, rate-limit concurrency, repeated top-ups, customer mismatch, concurrent event replay, subscription reset, annual month-end renewal, partial and full refunds, refund ordering and cancellation expiry. The Postgres suite also verifies real local SQL transactions, Auth.js session/token handling and concurrent credit/event idempotency in an isolated cluster. Remote database connectivity, real email delivery, Stripe test checkout and the customer portal require external acceptance and were not exercised by these local tests.
 
 ## Primary references
 

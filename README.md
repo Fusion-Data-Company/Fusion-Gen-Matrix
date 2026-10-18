@@ -1,6 +1,6 @@
 # Fusion Gen Matrix
 
-Fusion Gen Matrix is an original Fusion-branded image and video studio with model-driven controls, owned media references, projects, an asset library, community publishing, a credit ledger, and server integrations for Higgsfield, Auth.js/Resend, MongoDB, Cloudflare R2, and Stripe.
+Fusion Gen Matrix is an original Fusion-branded image and video studio with model-driven controls, owned media references, projects, an asset library, community publishing, a credit ledger, and server integrations for Higgsfield, Auth.js/Resend, Neon PostgreSQL, private Vercel Blob storage, and Stripe. GitHub and Vercel provide source publication and hosting.
 
 [Public showcase](https://fusion-gen-matrix.vercel.app) · [Source repository](https://github.com/Fusion-Data-Company/Fusion-Gen-Matrix) · [Launch runbook](docs/launch-runbook.md) · [Model catalog](docs/model-catalog.md)
 
@@ -12,7 +12,7 @@ The published app is a **read-only public showcase**. Local demo workflows are i
 | --- | --- | --- | --- |
 | `demo` | Development on this computer | Loopback-only preview sessions; durable files under `DATA_DIR` | Labeled sample outputs and local credits; no paid provider call or payment |
 | `showcase` | Public interface review | Signed out; no private database or storage access | Read-only. Sign-in, upload, generation, admin mutations and billing are unavailable |
-| `live` | A configured operating studio | Auth.js database sessions, MongoDB and private R2 objects | Authenticated provider estimates, credit-metered requests and explicitly configured billing |
+| `live` | A configured operating studio | Auth.js database sessions, Neon PostgreSQL and private Vercel Blob objects | Authenticated provider estimates, credit-metered requests and explicitly configured billing |
 
 Without an explicit setting, Vercel defaults to showcase and local development defaults to demo. Set the mode explicitly for deployments. A public deployment must never use demo mode.
 
@@ -71,10 +71,10 @@ Start with the variable names in [.env.example](.env.example), and use the [laun
 
 Live startup requires:
 
-- MongoDB with transaction support: `MONGODB_URI` and the chosen `MONGODB_DB`.
+- Neon PostgreSQL: `DATABASE_PROVIDER=postgres` and a production-only pooled `DATABASE_URL`. Apply the reviewed [PostgreSQL migration](docs/postgres.md) to the dedicated database before enabling live mode.
 - Auth.js and Resend: `AUTH_SECRET`, `AUTH_RESEND_KEY`, `EMAIL_FROM`, and the correct public `APP_URL`/`AUTH_URL`.
 - Higgsfield REST credentials: `HF_CREDENTIALS` in `key_id:key_secret` format, plus `HF_WEBHOOK_SECRET`. An authenticated connector does not provide these values to the standalone app.
-- Private R2 storage: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`.
+- Private Vercel Blob: `MEDIA_STORAGE_PROVIDER=vercel-blob` and an app-scoped private store with Vercel OIDC access or a server-only `BLOB_READ_WRITE_TOKEN`. See the [storage contract](docs/storage.md).
 - Reconciliation: `CRON_SECRET` and a scheduler that calls the protected route.
 - Direct browser uploads: `HF_UPLOAD_ORIGINS` containing exact verified provider storage origins, plus working provider CORS.
 
@@ -94,12 +94,13 @@ The USD limit is **per request**, not an account-wide or daily spending budget. 
 pnpm typecheck
 pnpm lint
 pnpm test
+pnpm test:postgres
 APP_MODE=showcase pnpm build
 ```
 
-The build includes the generated-browser-bundle secret scan and fails if it detects a match. `pnpm security:scan` can also inspect an existing build separately. The release checkpoint on 2026-10-15 (PDT) passed **185 tests**, TypeScript, ESLint and the production build. Local verification used Node.js 25.8.2; the deployment target is Node.js 22.x. See [verification and limits](docs/verification.md).
+The build includes the generated-browser-bundle secret scan and fails if it detects a match. `pnpm security:scan` can also inspect an existing build separately. The 2026-10-18 PostgreSQL/Blob checkpoint passed **280 standard tests and 27 real PostgreSQL integration tests**, TypeScript, scoped ESLint, and a Node.js 22 production build. After making PostgreSQL and Blob the defaults, all **100 targeted tests** and TypeScript passed again. See [verification and limits](docs/verification.md).
 
-The unit tests cover catalog mapping, generation accounting/lifecycle, authentication, billing and storage boundaries with local data and mocked provider calls.
+The standard tests cover catalog mapping, generation accounting/lifecycle, authentication, billing and storage boundaries with local data and mocked provider calls. `test:postgres` creates and removes a disposable local PostgreSQL 18 cluster; it verifies concurrent credits, retries, authorization, sessions, retention and cleanup against the real database engine. Its binary-location override is documented in [PostgreSQL setup](docs/postgres.md).
 
 Two standalone Playwright-based runners use an already running server and a locally installed Google Chrome browser:
 
@@ -112,7 +113,7 @@ BASE_URL=http://127.0.0.1:3210 pnpm test:smoke
 
 `test:smoke` is read-only and can target an actual public showcase by setting `BASE_URL` to its returned URL. It captures desktop/mobile views and prints page errors and overflow measurements. Review those diagnostics and screenshots; a zero exit code alone does not certify visual quality. The production-build local demo passed 14 workflow checks and four edge-case checks; local showcase passed six checks. See [verification and limits](docs/verification.md). Raw browser evidence is retained locally and excluded from the public repository.
 
-A passing build or test suite does not establish live email delivery, funded generation, real upload CORS, R2 retention, Stripe checkout, or a Lighthouse score.
+A passing build or test suite does not establish live email delivery, funded generation, real upload CORS, private Blob retention, Stripe checkout, or a Lighthouse score.
 
 ## Architecture and maintenance
 
